@@ -470,17 +470,16 @@ diff --git a/src/wallet/api/wallet.cpp b/src/wallet/api/wallet.cpp
 index 3fcd6f332..844a1c451 100644
 --- a/src/wallet/api/wallet.cpp
 +++ b/src/wallet/api/wallet.cpp
-@@ -48,6 +48,9 @@
+@@ -47,5 +47,8 @@
  #include <boost/locale.hpp>
  #include <boost/filesystem.hpp>
- #include "bc-ur/src/bc-ur.hpp"
 +#if defined(HIDAPI_DUMMY) && !defined(HAVE_HIDAPI)
 +#include "device/device_io_dummy.hpp"
 +#endif
  
  using namespace std;
  using namespace cryptonote;
-@@ -3178,4 +3181,101 @@ uint64_t WalletImpl::getBytesSent()
+@@ -3178,4 +3180,101 @@ uint64_t WalletImpl::getBytesSent()
      return m_wallet->get_bytes_sent();
  }
  

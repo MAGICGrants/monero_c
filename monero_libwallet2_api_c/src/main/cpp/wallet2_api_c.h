@@ -1012,6 +1012,8 @@ extern ADDAPI void MONERO_WalletManagerFactory_setLogCategories(const char* cate
 // };
 // }
 
+extern ADDAPI void* LWSF_WalletManagerFactory_getWalletManager();
+
 extern ADDAPI void MONERO_DEBUG_test0();
 extern ADDAPI bool MONERO_DEBUG_test1(bool x);
 extern ADDAPI int MONERO_DEBUG_test2(int x);

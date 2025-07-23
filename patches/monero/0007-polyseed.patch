@@ -125,13 +125,12 @@ diff --git a/external/CMakeLists.txt b/external/CMakeLists.txt
 index 074e23f16..f7e35f98f 100644
 --- a/external/CMakeLists.txt
 +++ b/external/CMakeLists.txt
-@@ -70,5 +70,7 @@ endif()
+@@ -70,4 +70,6 @@ endif()
  add_subdirectory(db_drivers)
  add_subdirectory(easylogging++)
  add_subdirectory(qrcodegen)
 +add_subdirectory(polyseed EXCLUDE_FROM_ALL)
 +add_subdirectory(utf8proc EXCLUDE_FROM_ALL)
- add_subdirectory(bc-ur)
  add_subdirectory(randomx EXCLUDE_FROM_ALL)
 diff --git a/external/polyseed b/external/polyseed
 new file mode 160000
@@ -280,7 +279,7 @@ new file mode 100644
 index 000000000..cca4eb746
 --- /dev/null
 +++ b/src/polyseed/CMakeLists.txt
-@@ -0,0 +1,25 @@
+@@ -0,0 +1,30 @@
 +set(polyseed_sources
 +        pbkdf2.c
 +        polyseed.cpp
@@ -296,6 +295,11 @@ index 000000000..cca4eb746
 +        ${polyseed_sources}
 +        ${polyseed_headers}
 +        ${polyseed_private_headers}
++)
++
++target_include_directories(polyseed_wrapper
++PUBLIC
++        "${monero_SOURCE_DIR}/external/polyseed/include"
 +)
 +
 +target_link_libraries(polyseed_wrapper

@@ -5,6 +5,7 @@
 #include <cstring>
 #include <thread>
 #include "../../../../monero/src/wallet/api/wallet2_api.h"
+#include "../../../../lwsf/include/lws_frontend.h"
 #include "monero_checksum.h"
 
 #ifdef __cplusplus
@@ -84,6 +85,7 @@ bool MONERO_PendingTransaction_commit(void* pendingTx_ptr, const char* filename,
     return pendingTx->commit(std::string(filename), overwrite);
     DEBUG_END()
 }
+/*
 const char* MONERO_PendingTransaction_commitUR(void* pendingTx_ptr, int max_fragment_length) {
     DEBUG_START()
     Monero::PendingTransaction *pendingTx = reinterpret_cast<Monero::PendingTransaction*>(pendingTx_ptr);
@@ -93,7 +95,7 @@ const char* MONERO_PendingTransaction_commitUR(void* pendingTx_ptr, int max_frag
     memcpy(buffer, str.c_str(), size + 1);
     return buffer;
     DEBUG_END()
-}
+} */
 uint64_t MONERO_PendingTransaction_amount(void* pendingTx_ptr) {
     DEBUG_START()
     Monero::PendingTransaction *pendingTx = reinterpret_cast<Monero::PendingTransaction*>(pendingTx_ptr);
@@ -162,7 +164,7 @@ const char* MONERO_PendingTransaction_signersKeys(void* pendingTx_ptr, const cha
     return vectorToString(txid, std::string(separator));
     DEBUG_END()
 }
-
+/*
 const char* MONERO_PendingTransaction_hex(void* pendingTx_ptr, const char* separator) {
     DEBUG_START()
     Monero::PendingTransaction *pendingTx = reinterpret_cast<Monero::PendingTransaction*>(pendingTx_ptr);
@@ -177,7 +179,7 @@ const char* MONERO_PendingTransaction_txKey(void* pendingTx_ptr, const char* sep
     std::vector<std::string> txid = pendingTx->txKey();
     return vectorToString(txid, std::string(separator));
     DEBUG_END()
-}
+} */
 
 // UnsignedTransaction
 
@@ -254,7 +256,7 @@ bool MONERO_UnsignedTransaction_sign(void* unsignedTx_ptr, const char* signedFil
     Monero::UnsignedTransaction *unsignedTx = reinterpret_cast<Monero::UnsignedTransaction*>(unsignedTx_ptr);
     return unsignedTx->sign(std::string(signedFileName));
     DEBUG_END()
-}
+}/*
 const char* MONERO_UnsignedTransaction_signUR(void* unsignedTx_ptr, int max_fragment_length) {
     DEBUG_START()
     Monero::UnsignedTransaction *unsignedTx = reinterpret_cast<Monero::UnsignedTransaction*>(unsignedTx_ptr);
@@ -264,7 +266,7 @@ const char* MONERO_UnsignedTransaction_signUR(void* unsignedTx_ptr, int max_frag
     memcpy(buffer, str.c_str(), size + 1);
     return buffer;
     DEBUG_END()
-}
+}*/
 // TransactionInfo
 int MONERO_TransactionInfo_direction(void* txInfo_ptr) {
     DEBUG_START()
@@ -563,7 +565,7 @@ int MONERO_AddressBook_lookupPaymentID(void* addressBook_ptr, const char* paymen
     DEBUG_END()
 }
 
-// CoinsInfo
+/* CoinsInfo
 uint64_t MONERO_CoinsInfo_blockHeight(void* coinsInfo_ptr) {
     DEBUG_START()
     Monero::CoinsInfo *coinsInfo = reinterpret_cast<Monero::CoinsInfo*>(coinsInfo_ptr);
@@ -817,6 +819,7 @@ void MONERO_Coins_setDescription(void* coins_ptr, const char* public_key, const 
     return coins->setDescription(std::string(public_key), std::string(description));
     DEBUG_END()
 }
+*/
 
 // SubaddressRow
 
@@ -1354,13 +1357,13 @@ uint64_t MONERO_Wallet_unlockedBalance(void* wallet_ptr, uint32_t accountIndex) 
     return wallet->unlockedBalance(accountIndex);
     DEBUG_END()
 }
-
+/*
 uint64_t MONERO_Wallet_viewOnlyBalance(void* wallet_ptr, uint32_t accountIndex) {
     DEBUG_START()
     Monero::Wallet *wallet = reinterpret_cast<Monero::Wallet*>(wallet_ptr);
     return wallet->viewOnlyBalance(accountIndex);
     DEBUG_END()
-}
+}*/
 
 // TODO
 bool MONERO_Wallet_watchOnly(void* wallet_ptr) {
@@ -1714,15 +1717,15 @@ void* MONERO_Wallet_createTransactionMultDest(void* wallet_ptr, const char* dst_
         optAmount = splitStringUint(std::string(amount_list), std::string(amount_list_separator));;
     }
     std::set<uint32_t> subaddr_indices = {};
-    std::set<std::string> preferred_inputs = splitString(std::string(preferredInputs), std::string(preferredInputs_separator));
+//    std::set<std::string> preferred_inputs = splitString(std::string(preferredInputs), std::string(preferredInputs_separator));
 
     return wallet->createTransactionMultDest(
         dst_addr, std::string(payment_id),
         optAmount, mixin_count,
         PendingTransaction_Priority_fromInt(pendingTransactionPriority),
         subaddr_account,
-        subaddr_indices,
-        preferred_inputs
+        subaddr_indices/*,
+        preferred_inputs */
     );
     DEBUG_END()
 }
@@ -1739,11 +1742,11 @@ void* MONERO_Wallet_createTransaction(void* wallet_ptr, const char* dst_addr, co
         optAmount = amount;
     }
     std::set<uint32_t> subaddr_indices = {};
-    std::set<std::string> preferred_inputs = splitString(std::string(preferredInputs), std::string(separator));
+//    std::set<std::string> preferred_inputs = splitString(std::string(preferredInputs), std::string(separator));
     return wallet->createTransaction(std::string(dst_addr), std::string(payment_id),
                                         optAmount, mixin_count,
                                         PendingTransaction_Priority_fromInt(pendingTransactionPriority),
-                                        subaddr_account, subaddr_indices, preferred_inputs);
+                                        subaddr_account, subaddr_indices /*, preferred_inputs */);
     DEBUG_END()
 }
 
@@ -1753,7 +1756,7 @@ void* MONERO_Wallet_loadUnsignedTx(void* wallet_ptr, const char* fileName) {
     return wallet->loadUnsignedTx(std::string(fileName));
     DEBUG_END()
 }
-
+/*
 void* MONERO_Wallet_loadUnsignedTxUR(void* wallet_ptr, const char* input) {
     DEBUG_START()
     Monero::Wallet *wallet = reinterpret_cast<Monero::Wallet*>(wallet_ptr);
@@ -1777,14 +1780,14 @@ bool MONERO_Wallet_hasUnknownKeyImages(void* wallet_ptr) {
     Monero::Wallet *wallet = reinterpret_cast<Monero::Wallet*>(wallet_ptr);
     return wallet->hasUnknownKeyImages();
     DEBUG_END()
-}
+} */
 bool MONERO_Wallet_exportKeyImages(void* wallet_ptr, const char* filename, bool all) {
     DEBUG_START()
     Monero::Wallet *wallet = reinterpret_cast<Monero::Wallet*>(wallet_ptr);
     return wallet->exportKeyImages(std::string(filename), all);
     DEBUG_END()
 }
-
+/*
 const char* MONERO_Wallet_exportKeyImagesUR(void* wallet_ptr, size_t max_fragment_length, bool all) {
     DEBUG_START()
     Monero::Wallet *wallet = reinterpret_cast<Monero::Wallet*>(wallet_ptr);
@@ -1794,25 +1797,25 @@ const char* MONERO_Wallet_exportKeyImagesUR(void* wallet_ptr, size_t max_fragmen
     memcpy(buffer, str.c_str(), size + 1);
     return buffer;
     DEBUG_END()
-}
+}*/
 bool MONERO_Wallet_importKeyImages(void* wallet_ptr, const char* filename) {
     DEBUG_START()
     Monero::Wallet *wallet = reinterpret_cast<Monero::Wallet*>(wallet_ptr);
     return wallet->importKeyImages(std::string(filename));
     DEBUG_END()
-}
+}/*
 bool MONERO_Wallet_importKeyImagesUR(void* wallet_ptr, const char* input) {
     DEBUG_START()
     Monero::Wallet *wallet = reinterpret_cast<Monero::Wallet*>(wallet_ptr);
     return wallet->importKeyImagesUR(std::string(input));
     DEBUG_END()
-}
+}*/
 bool MONERO_Wallet_exportOutputs(void* wallet_ptr, const char* filename, bool all) {
     DEBUG_START()
     Monero::Wallet *wallet = reinterpret_cast<Monero::Wallet*>(wallet_ptr);
     return wallet->exportOutputs(std::string(filename), all);
     DEBUG_END()
-}
+}/*
 const char* MONERO_Wallet_exportOutputsUR(void* wallet_ptr, size_t max_fragment_length, bool all) {
     DEBUG_START()
     Monero::Wallet *wallet = reinterpret_cast<Monero::Wallet*>(wallet_ptr);
@@ -1822,19 +1825,21 @@ const char* MONERO_Wallet_exportOutputsUR(void* wallet_ptr, size_t max_fragment_
     memcpy(buffer, str.c_str(), size + 1);
     return buffer;
     DEBUG_END()
-}
+}*/
 bool MONERO_Wallet_importOutputs(void* wallet_ptr, const char* filename) {
     DEBUG_START()
     Monero::Wallet *wallet = reinterpret_cast<Monero::Wallet*>(wallet_ptr);
     return wallet->importOutputs(std::string(filename));
     DEBUG_END()
 }
+/*
 bool MONERO_Wallet_importOutputsUR(void* wallet_ptr, const char* input) {
     DEBUG_START()
     Monero::Wallet *wallet = reinterpret_cast<Monero::Wallet*>(wallet_ptr);
     return wallet->importOutputsUR(std::string(input));
     DEBUG_END()
 }
+*/
 //     virtual bool setupBackgroundSync(const BackgroundSyncType background_sync_type, const std::string &wallet_password, const optional<std::string> &background_cache_password) = 0;
 bool MONERO_Wallet_setupBackgroundSync(void* wallet_ptr, int background_sync_type, const char* wallet_password, const char* background_cache_password) {
     DEBUG_START()
@@ -1863,13 +1868,14 @@ bool MONERO_Wallet_stopBackgroundSync(void* wallet_ptr, const char* wallet_passw
     return wallet->stopBackgroundSync(std::string(wallet_password));
     DEBUG_END()
 }
+/*
 //     virtual bool isBackgroundSyncing() const = 0;
 bool MONERO_Wallet_isBackgroundSyncing(void* wallet_ptr) {
     DEBUG_START()
     Monero::Wallet *wallet = reinterpret_cast<Monero::Wallet*>(wallet_ptr);
     return wallet->hasUnknownKeyImages();
     DEBUG_END()
-}
+}*/
 //     virtual bool isBackgroundWallet() const = 0;
 bool MONERO_Wallet_isBackgroundWallet(void* wallet_ptr) {
     DEBUG_START()
@@ -1889,13 +1895,13 @@ void* MONERO_Wallet_addressBook(void* wallet_ptr) {
     return wallet->addressBook();
     DEBUG_END()
 }
-//     virtual Coins * coins() = 0;
+/*     virtual Coins * coins() = 0;
 void* MONERO_Wallet_coins(void* wallet_ptr) {
     DEBUG_START()
     Monero::Wallet *wallet = reinterpret_cast<Monero::Wallet*>(wallet_ptr);
     return wallet->coins();
     DEBUG_END()
-}
+}*/
 //     virtual Subaddress * subaddress() = 0;
 void* MONERO_Wallet_subaddress(void* wallet_ptr) {
     DEBUG_START()
@@ -2239,7 +2245,7 @@ void* MONERO_WalletManager_createWalletFromDevice(void* wm_ptr, const char* path
     return reinterpret_cast<void*>(wallet);
     DEBUG_END()
 }
-
+/*
 void* MONERO_WalletManager_createDeterministicWalletFromSpendKey(void* wm_ptr, const char* path, const char* password,
                                                 const char* language, int nettype, uint64_t restoreHeight,
                                                 const char* spendKeyString, uint64_t kdf_rounds) {
@@ -2256,7 +2262,7 @@ void* MONERO_WalletManager_createDeterministicWalletFromSpendKey(void* wm_ptr, c
     );
     return reinterpret_cast<void*>(wallet);
     DEBUG_END()
-}
+}*/
 
 void* MONERO_WalletManager_createWalletFromPolyseed(void* wm_ptr, const char* path, const char* password,
                                                 int nettype, const char* mnemonic, const char* passphrase,
@@ -2431,6 +2437,13 @@ void MONERO_WalletManagerFactory_setLogCategories(const char* categories) {
     DEBUG_START()
     return Monero::WalletManagerFactory::setLogCategories(std::string(categories));
     DEBUG_END()
+}
+
+void* LWSF_WalletManagerFactory_getWalletManager() {
+    DEBUG_START();
+    Monero::WalletManager *wm = lwsf::WalletManagerFactory::getWalletManager();
+    return reinterpret_cast<void*>(wm);
+    DEBUG_END();
 }
 
 // DEBUG functions

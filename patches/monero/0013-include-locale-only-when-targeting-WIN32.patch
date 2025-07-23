@@ -12,7 +12,7 @@ diff --git a/CMakeLists.txt b/CMakeLists.txt
 index 1eac121db..5938be622 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -1089,7 +1089,11 @@ if(NOT Boost_FOUND)
+@@ -1088,7 +1088,11 @@ if(NOT Boost_FOUND)
  elseif(Boost_FOUND)
    message(STATUS "Found Boost Version: ${Boost_VERSION_STRING}")
  
@@ -29,7 +29,7 @@ diff --git a/src/wallet/api/wallet.cpp b/src/wallet/api/wallet.cpp
 index 20ccbfb35..c43803033 100644
 --- a/src/wallet/api/wallet.cpp
 +++ b/src/wallet/api/wallet.cpp
-@@ -46,7 +46,9 @@
+@@ -45,6 +45,8 @@
  #include <sstream>
  #include <unordered_map>
  
@@ -37,7 +37,6 @@ index 20ccbfb35..c43803033 100644
  #include <boost/locale.hpp>
 +#endif
  #include <boost/filesystem.hpp>
- #include "bc-ur/src/bc-ur.hpp"
  #if defined(HIDAPI_DUMMY) && !defined(HAVE_HIDAPI)
 -- 
 2.49.0

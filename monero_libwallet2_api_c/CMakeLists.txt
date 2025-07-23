@@ -115,7 +115,10 @@ if (${MONERO_FLAVOR} STREQUAL "zano")
     )
 endif()
 
-add_subdirectory("${CMAKE_SOURCE_DIR}/../${MONERO_FLAVOR}" ${CMAKE_BINARY_DIR}/${MONERO_FLAVOR}_build EXCLUDE_FROM_ALL)
+if (NOT (${MONERO_FLAVOR} STREQUAL "monero"))
+    add_subdirectory("${CMAKE_SOURCE_DIR}/../${MONERO_FLAVOR}" ${CMAKE_BINARY_DIR}/${MONERO_FLAVOR}_build EXCLUDE_FROM_ALL)
+endif ()
+
 if(${HOST_ABI} STREQUAL "x86_64-apple-darwin11" OR ${HOST_ABI} STREQUAL "aarch64-apple-darwin11" OR ${HOST_ABI} STREQUAL "x86_64-apple-darwin" OR ${HOST_ABI} STREQUAL "aarch64-apple-darwin" OR ${HOST_ABI} STREQUAL "host-apple-darwin" OR ${HOST_ABI} STREQUAL "x86_64-host-apple-darwin" OR ${HOST_ABI} STREQUAL "aarch64-host-apple-darwin" OR ${HOST_ABI} STREQUAL "host-apple-ios" OR ${HOST_ABI} STREQUAL "aarch64-apple-ios" OR ${HOST_ABI} STREQUAL "aarch64-apple-iossimulator" OR ${HOST_ABI} STREQUAL "x86_64-apple-iossimulator")
     if (${MONERO_FLAVOR} STREQUAL "monero")
         set(EXPORTED_SYMBOLS_FILE ${CMAKE_CURRENT_SOURCE_DIR}/monero_libwallet2_api_c.exp)
@@ -130,7 +133,23 @@ if(${HOST_ABI} STREQUAL "x86_64-apple-darwin11" OR ${HOST_ABI} STREQUAL "aarch64
 endif()
 
 if (${MONERO_FLAVOR} STREQUAL "monero")
-    set(WALLET_TARGETS wallet_api ${wallet_api_LIB_DEPENDS}) # wallet_api_LIB_DEPENDS
+    include(FetchContent)
+    FetchContent_Declare(monero SOURCE_DIR "${CMAKE_SOURCE_DIR}/../monero")
+
+    if (NOT monero_POPULATED)
+        FetchContent_MakeAvailable(monero)
+    endif ()
+
+    set(MONERO_SOURCE_DIR "${monero_SOURCE_DIR}")
+    set(LWSF_POLYSEED_SOURCE "${CMAKE_SOURCE_DIR}/../monero/external/polyseed")
+    FetchContent_Declare(lwsf SOURCE_DIR "${CMAKE_SOURCE_DIR}/../lwsf")
+
+    set(LWSF_MONERO_C_ENABLE "ON")
+    if (NOT lwsf_POPULATED)
+        FetchContent_MakeAvailable(lwsf)
+    endif ()
+
+    set(WALLET_TARGETS wallet_api ${wallet_api_LIB_DEPENDS} lwsf-api) # wallet_api_LIB_DEPENDS
 elseif(${MONERO_FLAVOR} STREQUAL "wownero")
     set(WALLET_TARGETS wallet_api ${wallet_api_LIB_DEPENDS}) # wallet_api_LIB_DEPENDS
 elseif(${MONERO_FLAVOR} STREQUAL "zano")

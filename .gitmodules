@@ -16,3 +16,6 @@
 	url = https://github.com/MrCyjaneK/wownero-seed
 	branch = cyjan-namespace2
 	shallow = true
+[submodule "lwsf"]
+	path = lwsf
+	url = https://github.com/vtnerd/lwsf.git
