@@ -22,10 +22,10 @@ Subject: [PATCH 06/17] add dummy device for ledger
  create mode 100644 src/device/device_io_dummy.hpp
 
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index c73b813d8..ce5ef4bab 100644
+index db69b1b04..52edff430 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -692,16 +692,21 @@ include_directories(${LMDB_INCLUDE})
+@@ -690,16 +690,21 @@ include_directories(${LMDB_INCLUDE})
  include_directories(${LIBUNWIND_INCLUDE})
  link_directories(${LIBUNWIND_LIBRARY_DIRS})
  
@@ -147,7 +147,7 @@ index 392703a24..ffd419779 100644
  
 diff --git a/src/device/device_io_dummy.cpp b/src/device/device_io_dummy.cpp
 new file mode 100644
-index 000000000..01e6fc7b7
+index 000000000..74742150d
 --- /dev/null
 +++ b/src/device/device_io_dummy.cpp
 @@ -0,0 +1,161 @@
@@ -315,7 +315,7 @@ index 000000000..01e6fc7b7
 \ No newline at end of file
 diff --git a/src/device/device_io_dummy.hpp b/src/device/device_io_dummy.hpp
 new file mode 100644
-index 000000000..1128b9c1d
+index 000000000..87a5f109f
 --- /dev/null
 +++ b/src/device/device_io_dummy.hpp
 @@ -0,0 +1,82 @@
@@ -402,7 +402,7 @@ index 000000000..1128b9c1d
 +
 +#endif // HAVE_HIDAPI
 diff --git a/src/device/device_ledger.cpp b/src/device/device_ledger.cpp
-index bb5b6f497..046201a1e 100644
+index 5d0afe1ee..bc7699974 100644
 --- a/src/device/device_ledger.cpp
 +++ b/src/device/device_ledger.cpp
 @@ -41,7 +41,7 @@ namespace hw {
@@ -423,7 +423,7 @@ index bb5b6f497..046201a1e 100644
        this->mode = NONE;
        this->has_view_key = false;
        this->tx_in_progress = false;
-@@ -533,7 +533,9 @@ namespace hw {
+@@ -532,7 +532,9 @@ namespace hw {
  
      bool device_ledger::connect(void) {
        this->disconnect();
@@ -467,10 +467,11 @@ index 03058c4f1..39454ca6d 100644
          unsigned char buffer_send[BUFFER_SEND_SIZE];
          unsigned int  length_recv;
 diff --git a/src/wallet/api/wallet.cpp b/src/wallet/api/wallet.cpp
-index 3fcd6f332..844a1c451 100644
+index 89df5c517..72e15f3df 100644
 --- a/src/wallet/api/wallet.cpp
 +++ b/src/wallet/api/wallet.cpp
-@@ -47,5 +47,8 @@
+@@ -47,6 +47,9 @@
+ 
  #include <boost/locale.hpp>
  #include <boost/filesystem.hpp>
 +#if defined(HIDAPI_DUMMY) && !defined(HAVE_HIDAPI)
@@ -479,7 +480,7 @@ index 3fcd6f332..844a1c451 100644
  
  using namespace std;
  using namespace cryptonote;
-@@ -3178,4 +3180,101 @@ uint64_t WalletImpl::getBytesSent()
+@@ -2871,4 +2874,101 @@ uint64_t WalletImpl::getBytesSent()
      return m_wallet->get_bytes_sent();
  }
  
@@ -582,10 +583,10 @@ index 3fcd6f332..844a1c451 100644
 +
  } // namespace
 diff --git a/src/wallet/api/wallet.h b/src/wallet/api/wallet.h
-index edf8bb8ce..6bfb61cb8 100644
+index ac7ce2f6a..cf1752160 100644
 --- a/src/wallet/api/wallet.h
 +++ b/src/wallet/api/wallet.h
-@@ -301,6 +301,20 @@ private:
+@@ -293,6 +293,20 @@ private:
      // cache connection status to avoid unnecessary RPC calls
      mutable std::atomic<bool>   m_is_connected;
      boost::optional<epee::net_utils::http::login> m_daemon_login{};
@@ -607,10 +608,10 @@ index edf8bb8ce..6bfb61cb8 100644
  
  
 diff --git a/src/wallet/api/wallet2_api.h b/src/wallet/api/wallet2_api.h
-index 764adbfbf..a48a6be54 100644
+index e349df176..bfeadf82d 100644
 --- a/src/wallet/api/wallet2_api.h
 +++ b/src/wallet/api/wallet2_api.h
-@@ -1150,6 +1150,19 @@ struct Wallet
+@@ -1140,6 +1140,19 @@ struct Wallet
  
      //! get bytes sent
      virtual uint64_t getBytesSent() = 0;
@@ -653,6 +654,3 @@ index e81b8f83a..277be6ac9 100644
  }
  
  std::vector<std::string> WalletManagerImpl::findWallets(const std::string &path)
--- 
-2.49.0
-

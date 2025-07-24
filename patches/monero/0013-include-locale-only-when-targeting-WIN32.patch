@@ -9,7 +9,7 @@ Subject: [PATCH 13/17] include locale only when targeting WIN32
  2 files changed, 7 insertions(+), 1 deletion(-)
 
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 1eac121db..5938be622 100644
+index 3f919b499..cdeef2289 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
 @@ -1088,7 +1088,11 @@ if(NOT Boost_FOUND)
@@ -26,10 +26,10 @@ index 1eac121db..5938be622 100644
    # Boost System is header-only since 1.69
    if (Boost_VERSION_STRING VERSION_LESS 1.69.0)
 diff --git a/src/wallet/api/wallet.cpp b/src/wallet/api/wallet.cpp
-index 20ccbfb35..c43803033 100644
+index 6ed76ccd0..80847757c 100644
 --- a/src/wallet/api/wallet.cpp
 +++ b/src/wallet/api/wallet.cpp
-@@ -45,6 +45,8 @@
+@@ -45,7 +45,9 @@
  #include <sstream>
  #include <unordered_map>
  
@@ -38,6 +38,4 @@ index 20ccbfb35..c43803033 100644
 +#endif
  #include <boost/filesystem.hpp>
  #if defined(HIDAPI_DUMMY) && !defined(HAVE_HIDAPI)
--- 
-2.49.0
-
+ #include "device/device_io_dummy.hpp"
