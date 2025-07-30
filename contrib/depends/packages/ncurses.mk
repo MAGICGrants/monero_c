@@ -21,7 +21,7 @@ define $(package)_set_vars
   $(package)_config_opts+=--without-tests
   $(package)_config_opts+=--without-tack
   $(package)_config_opts+=--without-manpages
-  $(package)_config_opts+=--with-termlib
+  $(package)_config_opts+=--with-termlib=tinfo
   $(package)_config_opts+=--disable-tic-depends
   $(package)_config_opts+=--disable-big-strings
   $(package)_config_opts+=--disable-ext-colors
