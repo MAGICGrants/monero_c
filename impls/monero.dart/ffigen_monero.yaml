@@ -9,3 +9,4 @@ exclude-all-by-default: true
 functions:
   include:
     - "MONERO_.+"
+    - "LWSF_.+"
