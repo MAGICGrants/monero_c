@@ -4090,6 +4090,14 @@ WalletManager WalletManagerFactory_getWalletManager() {
   return s;
 }
 
+WalletManager WalletManagerFactory_getLWSFWalletManager() {
+  debugStart?.call('LWSF_WalletManagerFactory_getWalletManager');
+  lib ??= MoneroC(DynamicLibrary.open(libPath));
+  final s = lib!.LWSF_WalletManagerFactory_getWalletManager();
+  debugEnd?.call('LWSF_WalletManagerFactory_getWalletManager');
+  return s;
+}
+
 // class LogLevel {
 //   int get LogLevel_Silent => lib!.LogLevel_Silent;
 //   int get LogLevel_0 => lib!.LogLevel_0;
