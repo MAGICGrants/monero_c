@@ -403,4 +403,5 @@ abstract class Wallet2WalletManagerFactory {
   void setLogLevel(int level);
   void setLogCategories(String categories);
   Wallet2WalletManager getWalletManager();
+  Wallet2WalletManager getLWSFWalletManager();
 }

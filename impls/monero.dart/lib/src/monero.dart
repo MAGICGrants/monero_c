@@ -1664,6 +1664,11 @@ class MoneroWalletManagerFactory implements Wallet2WalletManagerFactory {
   }
 
   @override
+  Wallet2WalletManager getLWSFWalletManager() {
+    return MoneroWalletManager(monero.WalletManagerFactory_getLWSFWalletManager());
+  }
+
+  @override
   void setLogCategories(String categories) {
     monero.WalletManagerFactory_setLogCategories(categories);
   }
