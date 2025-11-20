@@ -43,7 +43,7 @@ the current state.
  4 files changed, 25 insertions(+), 15 deletions(-)
 
 diff --git a/src/wallet/api/wallet.cpp b/src/wallet/api/wallet.cpp
-index 8fda0bab7..67b170e3d 100644
+index 165b21c9f..1ea5fdb8e 100644
 --- a/src/wallet/api/wallet.cpp
 +++ b/src/wallet/api/wallet.cpp
 @@ -55,8 +55,8 @@ using namespace cryptonote;
@@ -87,22 +87,17 @@ index 8fda0bab7..67b170e3d 100644
              LOG_PRINT_L3(__FUNCTION__ << ": refreshing...");
              doRefresh();
          }
-@@ -2481,12 +2482,12 @@ void WalletImpl::doRefresh()
-             }
-             m_wallet->find_and_save_rings(false);
-         } else {
--           LOG_PRINT_L3(__FUNCTION__ << ": skipping refresh - daemon is not synced");
-+            LOG_PRINT_L3(__FUNCTION__ << ": skipping refresh - daemon is not synced");
-         }
+@@ -2485,8 +2486,7 @@ void WalletImpl::doRefresh()
      } catch (const std::exception &e) {
          setStatusError(e.what());
          break;
 -    }while(!rescan && (rescan=m_refreshShouldRescan.exchange(false))); // repeat if not rescanned and rescan was requested
+-
 +    }while(m_wallet->get_refresh_enabled() && !rescan && (rescan=m_refreshShouldRescan.exchange(false))); // repeat if not rescanned and rescan was requested
- 
      if (m_wallet2Callback->getListener()) {
          m_wallet2Callback->getListener()->refreshed();
-@@ -2496,9 +2497,9 @@ void WalletImpl::doRefresh()
+     }
+@@ -2495,9 +2495,9 @@ void WalletImpl::doRefresh()
  
  void WalletImpl::startRefresh()
  {
@@ -114,7 +109,7 @@ index 8fda0bab7..67b170e3d 100644
          m_refreshCV.notify_one();
      }
  }
-@@ -2508,7 +2509,7 @@ void WalletImpl::startRefresh()
+@@ -2507,7 +2507,7 @@ void WalletImpl::startRefresh()
  void WalletImpl::stopRefresh()
  {
      if (!m_refreshThreadDone) {
@@ -123,7 +118,7 @@ index 8fda0bab7..67b170e3d 100644
          m_refreshThreadDone = true;
          m_refreshCV.notify_one();
          m_refreshThread.join();
-@@ -2519,9 +2520,7 @@ void WalletImpl::pauseRefresh()
+@@ -2518,9 +2518,7 @@ void WalletImpl::pauseRefresh()
  {
      LOG_PRINT_L2(__FUNCTION__ << ": refresh paused...");
      // TODO synchronize access
@@ -147,10 +142,10 @@ index 1f199a72c..ac7ce2f6a 100644
      std::atomic<int>  m_refreshIntervalMillis;
      std::atomic<bool> m_refreshShouldRescan;
 diff --git a/src/wallet/wallet2.cpp b/src/wallet/wallet2.cpp
-index dfb8b23cb..c9c2dbc82 100644
+index aedcaba06..40f5e7223 100644
 --- a/src/wallet/wallet2.cpp
 +++ b/src/wallet/wallet2.cpp
-@@ -1192,6 +1192,7 @@ wallet2::wallet2(network_type nettype, uint64_t kdf_rounds, bool unattended, std
+@@ -1190,6 +1190,7 @@ wallet2::wallet2(network_type nettype, uint64_t kdf_rounds, bool unattended, std
    m_upper_transaction_weight_limit(0),
    m_run(true),
    m_callback(0),
@@ -158,7 +153,7 @@ index dfb8b23cb..c9c2dbc82 100644
    m_trusted_daemon(false),
    m_nettype(nettype),
    m_multisig_rounds_passed(0),
-@@ -1412,6 +1413,14 @@ bool wallet2::set_daemon(std::string daemon_address, boost::optional<epee::net_u
+@@ -1410,6 +1411,14 @@ bool wallet2::set_daemon(std::string daemon_address, boost::optional<epee::net_u
    return ret;
  }
  //----------------------------------------------------------------------------------------------------
@@ -173,7 +168,7 @@ index dfb8b23cb..c9c2dbc82 100644
  bool wallet2::set_proxy(const std::string &address)
  {
    return m_http_client->set_proxy(address);
-@@ -4107,7 +4116,7 @@ void wallet2::refresh(bool trusted_daemon, uint64_t start_height, uint64_t & blo
+@@ -4135,7 +4144,7 @@ void wallet2::refresh(bool trusted_daemon, uint64_t start_height, uint64_t & blo
    // infer when we get an incoming output
  
    bool first = true, last = false;
@@ -183,7 +178,7 @@ index dfb8b23cb..c9c2dbc82 100644
      uint64_t next_blocks_start_height;
      std::vector<cryptonote::block_complete_entry> next_blocks;
 diff --git a/src/wallet/wallet2.h b/src/wallet/wallet2.h
-index 2f4ad52f1..daad1e940 100644
+index 66c244bd1..a627691c4 100644
 --- a/src/wallet/wallet2.h
 +++ b/src/wallet/wallet2.h
 @@ -1078,6 +1078,8 @@ private:
@@ -195,7 +190,7 @@ index 2f4ad52f1..daad1e940 100644
  
      void stop() { m_run.store(false, std::memory_order_relaxed); m_message_store.stop(); }
  
-@@ -1989,6 +1991,7 @@ private:
+@@ -1996,6 +1998,7 @@ private:
  
      boost::recursive_mutex m_daemon_rpc_mutex;
  
