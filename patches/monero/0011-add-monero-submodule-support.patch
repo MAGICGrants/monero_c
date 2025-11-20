@@ -1,0 +1,38 @@
+From ec93b6bf725eeff0999fdd9d603c4578cb19ae07 Mon Sep 17 00:00:00 2001
+From: cyan <cyjan@mrcyjanek.net>
+Date: Thu, 7 Nov 2024 16:46:24 +0000
+Subject: [PATCH 11/17] add monero submodule support
+
+---
+ CMakeLists.txt                   | 6 +++---
+ cmake/CheckLinkerFlag.cmake      | 2 +-
+ src/wallet/wallet_rpc_server.cpp | 2 +-
+ 3 files changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index ee08e9193..d0d6da7e1 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -222,9 +222,9 @@ function(forbid_undefined_symbols)
+ cmake_minimum_required(VERSION 3.5)
+ project(test)
+ option(EXPECT_SUCCESS "" ON)
+-file(WRITE "${CMAKE_SOURCE_DIR}/incorrect_source.cpp" "void undefined_symbol(); void symbol() { undefined_symbol(); }")
++file(WRITE "${CMAKE_CURRENT_SOURCE_DIR}/incorrect_source.cpp" "void undefined_symbol(); void symbol() { undefined_symbol(); }")
+ if (EXPECT_SUCCESS)
+-  file(APPEND "${CMAKE_SOURCE_DIR}/incorrect_source.cpp" " void undefined_symbol() {}; ")
++file(APPEND "${CMAKE_CURRENT_SOURCE_DIR}/incorrect_source.cpp" " void undefined_symbol() {}; ")
+ endif()
+ add_library(l0 SHARED incorrect_source.cpp)
+ add_library(l1 MODULE incorrect_source.cpp)
+@@ -388,7 +388,7 @@ else()
+ endif()
+ 
+ list(INSERT CMAKE_MODULE_PATH 0
+-  "${CMAKE_SOURCE_DIR}/cmake")
++  "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+ 
+ if (NOT DEFINED ENV{DEVELOPER_LOCAL_TOOLS})
+   message(STATUS "Could not find DEVELOPER_LOCAL_TOOLS in env (not required)")
+-- 
+2.49.0
