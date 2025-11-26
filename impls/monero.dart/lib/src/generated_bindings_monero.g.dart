@@ -2624,6 +2624,24 @@ class MoneroC {
   late final _MONERO_Wallet_setProxy = _MONERO_Wallet_setProxyPtr.asFunction<
       bool Function(ffi.Pointer<ffi.Void>, ffi.Pointer<ffi.Char>)>();
 
+  bool MONERO_Wallet_setCaFilePath(
+    ffi.Pointer<ffi.Void> wallet_ptr,
+    ffi.Pointer<ffi.Char> path,
+  ) {
+    return _MONERO_Wallet_setCaFilePath(
+      wallet_ptr,
+      path,
+    );
+  }
+
+  late final _MONERO_Wallet_setCaFilePathPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Bool Function(ffi.Pointer<ffi.Void>,
+              ffi.Pointer<ffi.Char>)>>('MONERO_Wallet_setCaFilePath');
+  late final _MONERO_Wallet_setCaFilePath =
+      _MONERO_Wallet_setCaFilePathPtr.asFunction<
+          bool Function(ffi.Pointer<ffi.Void>, ffi.Pointer<ffi.Char>)>();
+
   int MONERO_Wallet_balance(
     ffi.Pointer<ffi.Void> wallet_ptr,
     int accountIndex,
