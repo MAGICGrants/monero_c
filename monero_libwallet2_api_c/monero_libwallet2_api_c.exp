@@ -122,6 +122,7 @@ _MONERO_Wallet_connected
 _MONERO_Wallet_setTrustedDaemon
 _MONERO_Wallet_trustedDaemon
 _MONERO_Wallet_setProxy
+_MONERO_Wallet_setCaFilePath
 _MONERO_Wallet_balance
 _MONERO_Wallet_unlockedBalance
 _MONERO_Wallet_watchOnly
@@ -259,3 +260,4 @@ _MONERO_free
 _MONERO_checksum_wallet2_api_c_h
 _MONERO_checksum_wallet2_api_c_cpp
 _MONERO_checksum_wallet2_api_c_exp
+_LWSF_WalletManagerFactory_getWalletManager
