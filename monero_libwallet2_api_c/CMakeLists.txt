@@ -75,6 +75,43 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden")
 set(MONERO_DIR ${CMAKE_SOURCE_DIR}/../${MONERO_FLAVOR})
 set(EXTERNAL_LIBS_DIR ${CMAKE_SOURCE_DIR}/../contrib/depends/${HOST_ABI})
 
+if (${MONERO_FLAVOR} STREQUAL "monero")
+    include(FetchContent)
+    FetchContent_Declare(monero SOURCE_DIR "${CMAKE_SOURCE_DIR}/../monero" EXCLUDE_FROM_ALL)
+
+    if (NOT monero_POPULATED)
+        FetchContent_MakeAvailable(monero)
+    endif ()
+
+    set(MONERO_SOURCE_DIR "${monero_SOURCE_DIR}")
+    set(LWSF_POLYSEED_SOURCE "${CMAKE_SOURCE_DIR}/../monero/external/polyseed")
+    FetchContent_Declare(lwsf SOURCE_DIR "${CMAKE_SOURCE_DIR}/../lwsf" EXCLUDE_FROM_ALL)
+
+    set(LWSF_MONERO_C_ENABLE "ON")
+    if (NOT lwsf_POPULATED)
+        FetchContent_MakeAvailable(lwsf)
+    endif ()
+
+    set(WALLET_TARGETS wallet_api ${wallet_api_LIB_DEPENDS} lwsf-api) # wallet_api_LIB_DEPENDS
+elseif(${MONERO_FLAVOR} STREQUAL "wownero")
+    set(WALLET_TARGETS wallet_api ${wallet_api_LIB_DEPENDS}) # wallet_api_LIB_DEPENDS
+elseif(${MONERO_FLAVOR} STREQUAL "zano")
+    find_package(Boost 1.71 REQUIRED COMPONENTS system filesystem thread timer date_time chrono regex serialization atomic program_options)
+    find_package(OpenSSL REQUIRED)
+    set(WALLET_TARGETS 
+        wallet
+        general
+        tor-connect
+        crypto
+        currency_core
+        common    
+        zlibstatic
+
+        ${Boost_LIBRARIES}
+        ${OpenSSL_LIBRARIES})
+endif()
+
+
 if (${HOST_ABI} STREQUAL "x86_64-apple-darwin11" OR ${HOST_ABI} STREQUAL "aarch64-apple-darwin11")
   set(EXTRA_LIBS_APPLE "-framework IOKit" "-framework CoreFoundation" "-framework Cocoa" hidapi)
 #   set_target_properties(wallet2_api_c PROPERTIES LINK_FLAGS "-Wl,-F/Library/Frameworks")
@@ -132,41 +169,6 @@ if(${HOST_ABI} STREQUAL "x86_64-apple-darwin11" OR ${HOST_ABI} STREQUAL "aarch64
     set_target_properties(${TARGET} PROPERTIES LINK_DEPENDS ${EXPORTED_SYMBOLS_FILE})
 endif()
 
-if (${MONERO_FLAVOR} STREQUAL "monero")
-    include(FetchContent)
-    FetchContent_Declare(monero SOURCE_DIR "${CMAKE_SOURCE_DIR}/../monero")
-
-    if (NOT monero_POPULATED)
-        FetchContent_MakeAvailable(monero)
-    endif ()
-
-    set(MONERO_SOURCE_DIR "${monero_SOURCE_DIR}")
-    set(LWSF_POLYSEED_SOURCE "${CMAKE_SOURCE_DIR}/../monero/external/polyseed")
-    FetchContent_Declare(lwsf SOURCE_DIR "${CMAKE_SOURCE_DIR}/../lwsf")
-
-    set(LWSF_MONERO_C_ENABLE "ON")
-    if (NOT lwsf_POPULATED)
-        FetchContent_MakeAvailable(lwsf)
-    endif ()
-
-    set(WALLET_TARGETS wallet_api ${wallet_api_LIB_DEPENDS} lwsf-api) # wallet_api_LIB_DEPENDS
-elseif(${MONERO_FLAVOR} STREQUAL "wownero")
-    set(WALLET_TARGETS wallet_api ${wallet_api_LIB_DEPENDS}) # wallet_api_LIB_DEPENDS
-elseif(${MONERO_FLAVOR} STREQUAL "zano")
-    find_package(Boost 1.71 REQUIRED COMPONENTS system filesystem thread timer date_time chrono regex serialization atomic program_options)
-    find_package(OpenSSL REQUIRED)
-    set(WALLET_TARGETS 
-        wallet
-        general
-        tor-connect
-        crypto
-        currency_core
-        common    
-        zlibstatic
-
-        ${Boost_LIBRARIES}
-        ${OpenSSL_LIBRARIES})
-endif()
 
 if(${MONERO_FLAVOR} STREQUAL "wownero")
     add_subdirectory(wownero-seed EXCLUDE_FROM_ALL)
