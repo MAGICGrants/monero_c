@@ -1,0 +1,43 @@
+From a27578916e6a5a85d1c80af9b02461b9dc97bb58 Mon Sep 17 00:00:00 2001
+From: MAGIC Grants <info@magicgrants.org>
+Date: Tue, 29 Sep 2026 17:55:33 -0300
+Subject: [PATCH] Verify TLS hostname in user_ca mode
+
+The epee SSL verify callback only ran the RFC 2818 hostname check in
+system_ca mode. Light-wallet (LWS) connections on Android load a bundled
+CA set and select user_ca, so any publicly-trusted certificate for any
+host was accepted for the target host -- letting an on-path attacker MITM
+the LWS connection and capture the account's private view key.
+
+Run the hostname check whenever trust derives from a CA chain (system_ca
+OR user_ca). Exact-certificate pinning (user_certificates) and none are
+unaffected.
+---
+ contrib/epee/src/net_ssl.cpp | 10 +++++++++-
+ 1 file changed, 9 insertions(+), 1 deletion(-)
+
+diff --git a/contrib/epee/src/net_ssl.cpp b/contrib/epee/src/net_ssl.cpp
+index aef37844e..9fc610733 100644
+--- a/contrib/epee/src/net_ssl.cpp
++++ b/contrib/epee/src/net_ssl.cpp
+@@ -533,8 +533,16 @@ void ssl_options_t::configure(
+     {
+       // preverified means it passed system or user CA check. System CA is never loaded
+       // when fingerprints are whitelisted.
++      //
++      // The RFC 2818 hostname check must run whenever trust comes from a CA
++      // chain -- system_ca OR user_ca -- otherwise a CA-issued certificate for
++      // any host is accepted for this host (defeats the point of the chain).
++      // It is intentionally skipped for user_certificates (exact pinning) and
++      // none.
++      const bool chain_ca = verification == ssl_verification_t::system_ca ||
++        verification == ssl_verification_t::user_ca;
+       const bool verified = preverified &&
+-        (verification != ssl_verification_t::system_ca || host.empty() || MONERO_HOSTNAME_VERIFY(host)(preverified, ctx));
++        (!chain_ca || host.empty() || MONERO_HOSTNAME_VERIFY(host)(preverified, ctx));
+ 
+       if (!verified && !has_fingerprint(ctx))
+       {
+-- 
+2.55.0
+
