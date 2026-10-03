@@ -1,0 +1,45 @@
+From 5b253cb69849308b582257b026cbacf26ee09a54 Mon Sep 17 00:00:00 2001
+From: MAGIC Grants <info@magicgrants.org>
+Date: Sat, 3 Oct 2026 12:42:08 -0500
+Subject: [PATCH] Rescan the pool after a refresh stopped before processing it
+
+A session's first refresh clears the pending incoming payments and the
+scanned-pool records, then rebuilds them by processing the whole pool at
+the end of the refresh. When stop() ends the refresh early, that
+processing is skipped, but the pool query time was already advanced when
+the pool was fetched. The next refresh then asks the daemon only for
+transactions added since, so the payments cleared at the start do not
+come back until they are mined.
+
+WalletImpl::store() calls stop() whenever a store lands during a
+refresh, which makes this easy to hit during a long catch-up.
+
+Reset the pool query time whenever a refresh that should check the pool
+is stopped, so the next refresh fetches and processes the whole pool
+again.
+---
+ src/wallet/wallet2.cpp | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/src/wallet/wallet2.cpp b/src/wallet/wallet2.cpp
+index ef9c3ba..d825ce1 100644
+--- a/src/wallet/wallet2.cpp
++++ b/src/wallet/wallet2.cpp
+@@ -4369,6 +4369,14 @@ void wallet2::refresh(bool trusted_daemon, uint64_t start_height, uint64_t & blo
+     LOG_PRINT_L1("Failed to check pending transactions");
+   }
+ 
++  // A refresh stopped before the pool processing above has already advanced the
++  // pool query time, so the next refresh would ask only for transactions added
++  // since and never process the ones fetched here. On a session's first refresh
++  // that includes every pending incoming payment, cleared before fetching. Reset
++  // the query time so the next refresh fetches and processes the whole pool.
++  if (check_pool && !refresh_running())
++    m_pool_info_query_time = 0;
++
+   m_first_refresh_done = true;
+   if (m_background_syncing || m_is_background_wallet)
+     m_background_sync_data.first_refresh_done = true;
+-- 
+2.50.1 (Apple Git-155)
+

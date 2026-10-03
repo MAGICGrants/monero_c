@@ -1345,14 +1345,18 @@ bool MONERO_Wallet_setProxy(void* wallet_ptr, const char* address) {
     DEBUG_END()
 }
 
+// The CA file is the trust store for the wallet's own server connection: the
+// light-wallet server for an LWSF wallet, the daemon for a wallet2 one. Returns
+// false when the wallet cannot take it (for a wallet2 wallet, a missing file).
 bool MONERO_Wallet_setCaFilePath(void* wallet_ptr, const char* path) {
     DEBUG_START()
     Monero::Wallet *wallet = reinterpret_cast<Monero::Wallet*>(wallet_ptr);
     lwsf::internal::wallet *lwsf_wallet = dynamic_cast<lwsf::internal::wallet*>(wallet);
-    if (!lwsf_wallet)
-        return false;
-    lwsf_wallet->setCaFilePath(std::string(path));
-    return true;
+    if (lwsf_wallet) {
+        lwsf_wallet->setCaFilePath(std::string(path));
+        return true;
+    }
+    return wallet->setDaemonCaFile(std::string(path));
     DEBUG_END()
 }
 

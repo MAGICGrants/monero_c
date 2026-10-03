@@ -1,0 +1,128 @@
+From c027988b688d6da0f3ae7f4995aa28c5560af8c8 Mon Sep 17 00:00:00 2001
+From: MAGIC Grants <info@magicgrants.org>
+Date: Sat, 3 Oct 2026 09:55:27 -0500
+Subject: [PATCH] Verify the daemon's TLS certificate when TLS is requested
+
+WalletImpl::init takes a use_ssl flag but never used it: wallet2 was
+always initialised in autodetect mode, which accepts any certificate and
+retries in plaintext when the handshake fails.
+
+Honour the flag. With use_ssl, the daemon connection now requires TLS
+with a certificate that chains to the trust store and names the host,
+and a failed handshake fails the connection. Without it, behaviour is
+unchanged (autodetect).
+
+Add Wallet::setDaemonCaFile so a caller can supply that trust store as a
+CA file, as LWSF already allows for light-wallet servers. Platforms whose
+bundled OpenSSL has no usable system store (Android, iOS) need this to
+verify a daemon at all.
+---
+ src/wallet/api/wallet.cpp    | 42 ++++++++++++++++++++++++++++++++++--
+ src/wallet/api/wallet.h      |  2 ++
+ src/wallet/api/wallet2_api.h | 10 +++++++++
+ 3 files changed, 52 insertions(+), 2 deletions(-)
+
+diff --git a/src/wallet/api/wallet.cpp b/src/wallet/api/wallet.cpp
+index 4b94aa3..4b0d566 100644
+--- a/src/wallet/api/wallet.cpp
++++ b/src/wallet/api/wallet.cpp
+@@ -2491,6 +2491,19 @@ bool WalletImpl::setProxy(const std::string &address)
+     return m_wallet->set_proxy(address);
+ }
+ 
++bool WalletImpl::setDaemonCaFile(const std::string &path)
++{
++    clearStatus();
++    boost::system::error_code ec;
++    if (!path.empty() && !boost::filesystem::exists(path, ec))
++    {
++        setStatusError(tr("CA file not found: ") + path);
++        return false;
++    }
++    m_daemon_ca_file = path;
++    return true;
++}
++
+ bool WalletImpl::watchOnly() const
+ {
+     return m_wallet->watch_only();
+@@ -2659,8 +2672,33 @@ void WalletImpl::pendingTxPostProcess(PendingTransactionImpl * pending)
+ 
+ bool WalletImpl::doInit(const string &daemon_address, const std::string &proxy_address, uint64_t upper_transaction_size_limit, bool ssl)
+ {
+-    if (!m_wallet->init(daemon_address, m_daemon_login, proxy_address, upper_transaction_size_limit))
+-       return false;
++    // When the caller asks for TLS, the daemon must present a certificate that
++    // chains to the trust store and names the host, and a failed handshake fails
++    // the connection. Autodetect would accept any certificate and retry in
++    // plaintext, so it is kept only for callers that did not ask for TLS.
++    epee::net_utils::ssl_options_t ssl_options{epee::net_utils::ssl_support_t::e_ssl_support_autodetect};
++    if (ssl)
++    {
++        if (!m_daemon_ca_file.empty())
++        {
++            ssl_options = epee::net_utils::ssl_options_t{std::vector<std::vector<std::uint8_t>>{}, m_daemon_ca_file};
++            ssl_options.verification = epee::net_utils::ssl_verification_t::user_ca;
++        }
++        else
++            ssl_options = epee::net_utils::ssl_options_t{epee::net_utils::ssl_support_t::e_ssl_support_enabled};
++    }
++
++    try
++    {
++        // Loading the CA file happens here, and an unreadable one throws.
++        if (!m_wallet->init(daemon_address, m_daemon_login, proxy_address, upper_transaction_size_limit, true, std::move(ssl_options)))
++           return false;
++    }
++    catch (const std::exception &e)
++    {
++        setStatusError(e.what());
++        return false;
++    }
+ 
+     // in case new wallet, this will force fast-refresh (pulling hashes instead of blocks)
+     // If daemon isn't synced a calculated block height will be used instead
+diff --git a/src/wallet/api/wallet.h b/src/wallet/api/wallet.h
+index f432973..b0c0b30 100644
+--- a/src/wallet/api/wallet.h
++++ b/src/wallet/api/wallet.h
+@@ -120,6 +120,7 @@ public:
+     void setTrustedDaemon(bool arg) override;
+     bool trustedDaemon() const override;
+     bool setProxy(const std::string &address) override;
++    bool setDaemonCaFile(const std::string &path) override;
+     uint64_t balance(uint32_t accountIndex = 0) const override;
+     uint64_t unlockedBalance(uint32_t accountIndex = 0) const override;
+     uint64_t blockChainHeight() const override;
+@@ -304,6 +305,7 @@ private:
+     // cache connection status to avoid unnecessary RPC calls
+     mutable std::atomic<bool>   m_is_connected;
+     boost::optional<epee::net_utils::http::login> m_daemon_login{};
++    std::string m_daemon_ca_file;
+ 
+     bool getStateIsConnected();
+ 
+diff --git a/src/wallet/api/wallet2_api.h b/src/wallet/api/wallet2_api.h
+index 14e5a9b..8c661d8 100644
+--- a/src/wallet/api/wallet2_api.h
++++ b/src/wallet/api/wallet2_api.h
+@@ -625,6 +625,16 @@ struct Wallet
+     virtual void setTrustedDaemon(bool arg) = 0;
+     virtual bool trustedDaemon() const = 0;
+     virtual bool setProxy(const std::string &address) = 0;
++
++    /*!
++     * \brief setDaemonCaFile - verify the daemon's TLS certificate against the CA
++     *                          certificates in this PEM file only, instead of the
++     *                          default trust store. Takes effect at the next init().
++     * \param path - PEM file; an empty string restores the default trust store
++     * \return - false when the file does not exist, or when this wallet does not
++     *            connect to a daemon itself
++     */
++    virtual bool setDaemonCaFile(const std::string &path) { (void)path; return false; }
+     virtual uint64_t balance(uint32_t accountIndex = 0) const = 0;
+     uint64_t balanceAll() const {
+         uint64_t result = 0;
+-- 
+2.50.1 (Apple Git-155)
+

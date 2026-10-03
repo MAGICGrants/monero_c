@@ -8,7 +8,14 @@ define $(package)_set_vars
 $(package)_config_env=AR="$($(package)_ar)" ARFLAGS=$($(package)_arflags) RANLIB="$($(package)_ranlib)" CC="$($(package)_cc)"
 $(package)_config_env_android=ANDROID_NDK_ROOT="$(host_prefix)/native" PATH="$(host_prefix)/native/bin" CC=clang AR=ar RANLIB=ranlib
 $(package)_build_env_android=ANDROID_NDK_ROOT="$(host_prefix)/native"
-$(package)_config_opts=--prefix=$(host_prefix) --openssldir=$(host_prefix)/etc/openssl --libdir=$(host_prefix)/lib
+# OPENSSLDIR is compiled into the library as the default certificate location
+# and the home of openssl.cnf. Under the build prefix it would name a directory
+# on the build host (a path in /tmp for CI builds) that any local user can
+# create on the machine the wallet runs on. /etc/ssl is root-owned on every
+# Unix-like target, Windows builds take their roots from the Windows store
+# instead, and no-autoload-config stops OpenSSL reading openssl.cnf at all.
+$(package)_config_opts=--prefix=$(host_prefix) --openssldir=/etc/ssl --libdir=$(host_prefix)/lib
+$(package)_config_opts+=no-autoload-config
 $(package)_config_opts+=no-capieng
 $(package)_config_opts+=no-dso
 $(package)_config_opts+=no-dtls1
