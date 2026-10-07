@@ -1880,7 +1880,13 @@ bool MONERO_Wallet_importOutputsUR(void* wallet_ptr, const char* input) {
 bool MONERO_Wallet_setupBackgroundSync(void* wallet_ptr, int background_sync_type, const char* wallet_password, const char* background_cache_password) {
     DEBUG_START()
     Monero::Wallet *wallet = reinterpret_cast<Monero::Wallet*>(wallet_ptr);
-    return wallet->setupBackgroundSync(Monero::Wallet::BackgroundSyncType::BackgroundSync_CustomPassword, std::string(wallet_password), std::string(background_cache_password));
+    Monero::Wallet::BackgroundSyncType type = static_cast<Monero::Wallet::BackgroundSyncType>(background_sync_type);
+    // Only CustomPassword takes a cache password; the optional stays unset otherwise.
+    Monero::optional<std::string> cache_password;
+    if (type == Monero::Wallet::BackgroundSyncType::BackgroundSync_CustomPassword) {
+        cache_password = Monero::optional<std::string>(std::string(background_cache_password));
+    }
+    return wallet->setupBackgroundSync(type, std::string(wallet_password), cache_password);
     DEBUG_END()
 }
 //     virtual BackgroundSyncType getBackgroundSyncType() const = 0;
