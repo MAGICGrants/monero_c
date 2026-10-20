@@ -263,3 +263,19 @@ std::vector<uint64_t> splitStringUint(const std::string& str, const std::string&
     tokens.push_back(std::stoull(content));  // Inserting the last token
     return tokens;
 }
+
+void wipeString(std::string& s) {
+    if (!s.empty()) {
+        // volatile, so the compiler cannot drop the writes to a dying string
+        volatile char* p = &s[0];
+        for (std::string::size_type i = 0; i < s.size(); i++) p[i] = 0;
+    }
+    s.clear();
+}
+
+const char* secretToBuffer(const Secret& s) {
+    const std::string::size_type size = s.value.size();
+    char *buffer = new char[size + 1];
+    memcpy(buffer, s.value.c_str(), size + 1);
+    return buffer;
+}

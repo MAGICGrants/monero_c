@@ -30,3 +30,23 @@ const char* vectorToString(const std::set<uint32_t>& intSet, const std::string s
 std::set<std::string> splitString(const std::string& str, const std::string& delim);
 std::vector<uint64_t> splitStringUint(const std::string& str, const std::string& delim);
 std::vector<std::string> splitStringVector(const std::string& str, const std::string& delim);
+
+// Overwrites [s], then empties it: std::string never clears the memory it
+// frees, so a secret left in one stays in the heap after it is gone.
+void wipeString(std::string& s);
+
+// A secret crossing the C API (a wallet password, a seed, a spend key), as
+// the std::string the wallet API takes. Wiped when it goes out of scope.
+class Secret {
+public:
+    explicit Secret(const char* s) : value(s ? s : "") {}
+    explicit Secret(std::string s) : value(std::move(s)) {}
+    ~Secret() { wipeString(value); }
+    Secret(const Secret&) = delete;
+    Secret& operator=(const Secret&) = delete;
+    std::string value;
+};
+
+// [s] in a new buffer for the caller, who wipes it before MONERO_free; [s]
+// itself is wiped when it goes out of scope.
+const char* secretToBuffer(const Secret& s);

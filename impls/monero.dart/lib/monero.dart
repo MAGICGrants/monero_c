@@ -1759,8 +1759,9 @@ String Wallet_seed(wallet ptr, {required String seedOffset}) {
     final seedOffset_ = seedOffset.toNativeUtf8().cast<Char>();
     final strPtr = lib!.MONERO_Wallet_seed(ptr, seedOffset_).cast<Utf8>();
     final str = strPtr.toDartString();
+    _wipeUtf8(strPtr.cast());
     MONERO_free(strPtr.cast());
-    calloc.free(seedOffset_);
+    _freeSecret(seedOffset_);
     debugEnd?.call('MONERO_Wallet_seed');
     return str;
   } catch (e) {
@@ -1830,7 +1831,7 @@ bool Wallet_setPassword(wallet ptr, {required String password}) {
   lib ??= MoneroC(DynamicLibrary.open(libPath));
   final password_ = password.toNativeUtf8().cast<Char>();
   final status = lib!.MONERO_Wallet_setPassword(ptr, password_);
-  calloc.free(password_);
+  _freeSecret(password_);
   debugEnd?.call('MONERO_Wallet_setPassword');
   return status;
 }
@@ -1842,6 +1843,7 @@ String Wallet_getPassword(wallet ptr) {
   try {
     final strPtr = lib!.MONERO_Wallet_getPassword(ptr).cast<Utf8>();
     final str = strPtr.toDartString();
+    _wipeUtf8(strPtr.cast());
     MONERO_free(strPtr.cast());
     debugEnd?.call('MONERO_Wallet_getPassword');
     return str;
@@ -1983,6 +1985,7 @@ String Wallet_secretSpendKey(wallet ptr) {
   try {
     final strPtr = lib!.MONERO_Wallet_secretSpendKey(ptr).cast<Utf8>();
     final str = strPtr.toDartString();
+    _wipeUtf8(strPtr.cast());
     MONERO_free(strPtr.cast());
     debugEnd?.call('MONERO_Wallet_secretSpendKey');
     return str;
@@ -2130,7 +2133,7 @@ bool Wallet_createWatchOnly(
   final getRefreshFromBlockHeight =
       lib!.MONERO_Wallet_createWatchOnly(ptr, path_, password_, language_);
   calloc.free(path_);
-  calloc.free(password_);
+  _freeSecret(password_);
   calloc.free(language_);
   debugEnd?.call('MONERO_Wallet_createWatchOnly');
   return getRefreshFromBlockHeight;
@@ -2518,8 +2521,9 @@ String Wallet_getPolyseed(wallet ptr, {required String passphrase}) {
     final strPtr =
         lib!.MONERO_Wallet_getPolyseed(ptr, passphrase_).cast<Utf8>();
     final str = strPtr.toDartString();
+    _wipeUtf8(strPtr.cast());
     MONERO_free(strPtr.cast());
-    calloc.free(passphrase_);
+    _freeSecret(passphrase_);
     debugEnd?.call('MONERO_Wallet_getPolyseed');
     return str;
   } catch (e) {
@@ -3156,8 +3160,8 @@ bool Wallet_setupBackgroundSync(
       backgroundCachePassword.toNativeUtf8().cast<Char>();
   final s = lib!.MONERO_Wallet_setupBackgroundSync(
       ptr, backgroundSyncType, walletPassword_, backgroundCachePassword_);
-  calloc.free(walletPassword_);
-  calloc.free(backgroundCachePassword_);
+  _freeSecret(walletPassword_);
+  _freeSecret(backgroundCachePassword_);
   debugEnd?.call('MONERO_Wallet_setupBackgroundSync');
   return s;
 }
@@ -3186,7 +3190,7 @@ bool Wallet_stopBackgroundSync(wallet ptr, String walletPassword) {
   lib ??= MoneroC(DynamicLibrary.open(libPath));
   final walletPassword_ = walletPassword.toNativeUtf8().cast<Char>();
   final v = lib!.MONERO_Wallet_stopBackgroundSync(ptr, walletPassword_);
-  calloc.free(walletPassword_);
+  _freeSecret(walletPassword_);
   debugEnd?.call('MONERO_Wallet_stopBackgroundSync');
   return v;
 }
@@ -3661,7 +3665,7 @@ wallet WalletManager_createWallet(
   final w = lib!.MONERO_WalletManager_createWallet(
       wm_ptr, path_, password_, language_, networkType);
   calloc.free(path_);
-  calloc.free(password_);
+  _freeSecret(password_);
   calloc.free(language_);
   debugEnd?.call('MONERO_WalletManager_createWallet');
   return w;
@@ -3681,7 +3685,7 @@ wallet WalletManager_openWallet(
   final w = lib!
       .MONERO_WalletManager_openWallet(wm_ptr, path_, password_, networkType);
   calloc.free(path_);
-  calloc.free(password_);
+  _freeSecret(password_);
   debugEnd?.call('MONERO_WalletManager_openWallet');
   return w;
 }
@@ -3706,9 +3710,9 @@ wallet WalletManager_recoveryWallet(
   final w = lib!.MONERO_WalletManager_recoveryWallet(wm_ptr, path_, password_,
       mnemonic_, networkType, restoreHeight, kdfRounds, seedOffset_);
   calloc.free(path_);
-  calloc.free(password_);
-  calloc.free(mnemonic_);
-  calloc.free(seedOffset_);
+  _freeSecret(password_);
+  _freeSecret(mnemonic_);
+  _freeSecret(seedOffset_);
   debugEnd?.call('MONERO_WalletManager_recoveryWallet');
   return w;
 }
@@ -3749,11 +3753,11 @@ wallet WalletManager_createWalletFromKeys(
     kdf_rounds,
   );
   calloc.free(path_);
-  calloc.free(password_);
+  _freeSecret(password_);
   calloc.free(language_);
   calloc.free(addressString_);
   calloc.free(viewKeyString_);
-  calloc.free(spendKeyString_);
+  _freeSecret(spendKeyString_);
   debugEnd?.call('MONERO_WalletManager_createWalletFromKeys');
   return w;
 }
@@ -3823,7 +3827,7 @@ wallet WalletManager_createWalletFromDevice(
       defaultSeparator, // ignore
       kdfRounds);
   calloc.free(path_);
-  calloc.free(password_);
+  _freeSecret(password_);
   calloc.free(deviceName_);
   calloc.free(subaddressLookahead_);
   debugEnd?.call('MONERO_WalletManager_createWalletFromDevice');
@@ -3859,9 +3863,9 @@ wallet WalletManager_createWalletFromPolyseed(
       restoreHeight,
       kdfRounds);
   calloc.free(path_);
-  calloc.free(password_);
-  calloc.free(mnemonic_);
-  calloc.free(seedOffset_);
+  _freeSecret(password_);
+  _freeSecret(mnemonic_);
+  _freeSecret(seedOffset_);
   debugEnd?.call('MONERO_WalletManager_createWalletFromPolyseed');
   return w;
 }
@@ -3901,7 +3905,7 @@ bool WalletManager_verifyWalletPassword(
   final s = lib!.MONERO_WalletManager_verifyWalletPassword(
       wm_ptr, keysFileName_, password_, noSpendKey, kdfRounds);
   calloc.free(keysFileName_);
-  calloc.free(password_);
+  _freeSecret(password_);
   debugEnd?.call('MONERO_WalletManager_verifyWalletPassword');
   return s;
 }
@@ -3920,7 +3924,7 @@ int WalletManager_queryWalletDevice(
   final s = lib!.MONERO_WalletManager_queryWalletDevice(
       wm_ptr, keysFileName_, password_, kdfRounds);
   calloc.free(keysFileName_);
-  calloc.free(password_);
+  _freeSecret(password_);
   debugEnd?.call('MONERO_WalletManager_queryWalletDevice');
   return s;
 }
@@ -4324,6 +4328,21 @@ String MONERO_checksum_wallet2_api_c_exp() {
 }
 
 @Deprecated("TODO")
+/// Zeroes a NUL-terminated native string: freed memory keeps what was written
+/// to it, and these hold secrets (a wallet password, a seed, a spend key).
+void _wipeUtf8(Pointer<Char> ptr) {
+  final bytes = ptr.cast<Uint8>();
+  for (var i = 0; bytes[i] != 0; i++) {
+    bytes[i] = 0;
+  }
+}
+
+/// [calloc.free] for a native copy of a secret: zeroed first.
+void _freeSecret(Pointer<Char> ptr) {
+  _wipeUtf8(ptr);
+  calloc.free(ptr);
+}
+
 void MONERO_free(Pointer<Void> wlptr) {
   debugStart?.call('MONERO_free');
   lib ??= MoneroC(DynamicLibrary.open(libPath));
