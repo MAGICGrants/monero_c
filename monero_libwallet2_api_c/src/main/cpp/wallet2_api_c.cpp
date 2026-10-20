@@ -1058,11 +1058,9 @@ bool MONERO_DeviceProgress_indeterminate(void* deviceProgress_ptr) {
 const char* MONERO_Wallet_seed(void* wallet_ptr, const char* seed_offset) {
     DEBUG_START()
     Monero::Wallet *wallet = reinterpret_cast<Monero::Wallet*>(wallet_ptr);
-    std::string str = wallet->seed(std::string(seed_offset));
-    const std::string::size_type size = str.size();
-    char *buffer = new char[size + 1];   //we need extra char for NUL
-    memcpy(buffer, str.c_str(), size + 1);
-    return buffer;
+    Secret offset(seed_offset);
+    Secret str(wallet->seed(offset.value));
+    return secretToBuffer(str);
     DEBUG_END()
 }
 
@@ -1106,18 +1104,16 @@ const char* MONERO_Wallet_errorString(void* wallet_ptr) {
 bool MONERO_Wallet_setPassword(void* wallet_ptr, const char* password) {
     DEBUG_START()
     Monero::Wallet *wallet = reinterpret_cast<Monero::Wallet*>(wallet_ptr);
-    return wallet->setPassword(std::string(password));
+    Secret secret(password);
+    return wallet->setPassword(secret.value);
     DEBUG_END()
 }
 
 const char* MONERO_Wallet_getPassword(void* wallet_ptr) {
     DEBUG_START()
     Monero::Wallet *wallet = reinterpret_cast<Monero::Wallet*>(wallet_ptr);
-    std::string str = wallet->getPassword();
-    const std::string::size_type size = str.size();
-    char *buffer = new char[size + 1];   //we need extra char for NUL
-    memcpy(buffer, str.c_str(), size + 1);
-    return buffer;
+    Secret str(wallet->getPassword());
+    return secretToBuffer(str);
     DEBUG_END()
 }
 
@@ -1204,11 +1200,8 @@ const char* MONERO_Wallet_publicViewKey(void* wallet_ptr) {
 const char* MONERO_Wallet_secretSpendKey(void* wallet_ptr) {
     DEBUG_START()
     Monero::Wallet *wallet = reinterpret_cast<Monero::Wallet*>(wallet_ptr);
-    std::string str = wallet->secretSpendKey();
-    const std::string::size_type size = str.size();
-    char *buffer = new char[size + 1];   //we need extra char for NUL
-    memcpy(buffer, str.c_str(), size + 1);
-    return buffer;
+    Secret str(wallet->secretSpendKey());
+    return secretToBuffer(str);
     DEBUG_END()
 }
 
@@ -1277,7 +1270,8 @@ bool MONERO_Wallet_init(void* wallet_ptr, const char* daemon_address, uint64_t u
 bool MONERO_Wallet_createWatchOnly(void* wallet_ptr, const char* path, const char* password, const char* language) {
     DEBUG_START()
     Monero::Wallet *wallet = reinterpret_cast<Monero::Wallet*>(wallet_ptr);
-    return wallet->createWatchOnly(std::string(path), std::string(password), std::string(language));
+    Secret secret(password);
+    return wallet->createWatchOnly(std::string(path), secret.value, std::string(language));
     DEBUG_END()
 }
 
@@ -1518,14 +1512,10 @@ void MONERO_Wallet_init3(void* wallet_ptr, const char* argv0, const char* defaul
 const char* MONERO_Wallet_getPolyseed(void* wallet_ptr, const char* passphrase) {
     DEBUG_START()
     Monero::Wallet *wallet = reinterpret_cast<Monero::Wallet*>(wallet_ptr);
-    std::string seed = "";
-    std::string _passphrase = std::string(passphrase);
-    wallet->getPolyseed(seed, _passphrase);
-    std::string str = seed;
-    const std::string::size_type size = str.size();
-    char *buffer = new char[size + 1];   //we need extra char for NUL
-    memcpy(buffer, str.c_str(), size + 1);
-    return buffer;
+    Secret seed("");
+    Secret _passphrase(passphrase);
+    wallet->getPolyseed(seed.value, _passphrase.value);
+    return secretToBuffer(seed);
     DEBUG_END()
 }
 //     static bool createPolyseed(std::string &seed_words, std::string &err, const std::string &language = "English");
@@ -1882,11 +1872,15 @@ bool MONERO_Wallet_setupBackgroundSync(void* wallet_ptr, int background_sync_typ
     Monero::Wallet *wallet = reinterpret_cast<Monero::Wallet*>(wallet_ptr);
     Monero::Wallet::BackgroundSyncType type = static_cast<Monero::Wallet::BackgroundSyncType>(background_sync_type);
     // Only CustomPassword takes a cache password; the optional stays unset otherwise.
+    Secret walletPassword(wallet_password);
     Monero::optional<std::string> cache_password;
     if (type == Monero::Wallet::BackgroundSyncType::BackgroundSync_CustomPassword) {
-        cache_password = Monero::optional<std::string>(std::string(background_cache_password));
+        Secret cachePassword(background_cache_password);
+        cache_password = Monero::optional<std::string>(cachePassword.value);
     }
-    return wallet->setupBackgroundSync(type, std::string(wallet_password), cache_password);
+    const bool ok = wallet->setupBackgroundSync(type, walletPassword.value, cache_password);
+    if (cache_password) wipeString(*cache_password);
+    return ok;
     DEBUG_END()
 }
 //     virtual BackgroundSyncType getBackgroundSyncType() const = 0;
@@ -1907,7 +1901,8 @@ bool MONERO_Wallet_startBackgroundSync(void* wallet_ptr) {
 bool MONERO_Wallet_stopBackgroundSync(void* wallet_ptr, const char* wallet_password) {
     DEBUG_START()
     Monero::Wallet *wallet = reinterpret_cast<Monero::Wallet*>(wallet_ptr);
-    return wallet->stopBackgroundSync(std::string(wallet_password));
+    Secret secret(wallet_password);
+    return wallet->stopBackgroundSync(secret.value);
     DEBUG_END()
 }
 /*
@@ -2213,9 +2208,10 @@ void MONERO_Wallet_setLedgerCallback(void (*sendToLedgerDevice)(unsigned char *c
 void* MONERO_WalletManager_createWallet(void* wm_ptr, const char* path, const char* password, const char* language, int networkType) {
     DEBUG_START()
     Monero::WalletManager *wm = reinterpret_cast<Monero::WalletManager*>(wm_ptr);
+    Secret secret(password);
     Monero::Wallet *wallet = wm->createWallet(
                     std::string(path),
-                    std::string(password),
+                    secret.value,
                     std::string(language),
                     static_cast<Monero::NetworkType>(networkType));
     return reinterpret_cast<void*>(wallet);
@@ -2225,9 +2221,10 @@ void* MONERO_WalletManager_createWallet(void* wm_ptr, const char* path, const ch
 void* MONERO_WalletManager_openWallet(void* wm_ptr, const char* path, const char* password, int networkType) {
     DEBUG_START()
     Monero::WalletManager *wm = reinterpret_cast<Monero::WalletManager*>(wm_ptr);
+    Secret secret(password);
     Monero::Wallet *wallet = wm->openWallet(
                     std::string(path),
-                    std::string(password),
+                    secret.value,
                     static_cast<Monero::NetworkType>(networkType));
     return reinterpret_cast<void*>(wallet);
     DEBUG_END()
@@ -2238,14 +2235,17 @@ void* MONERO_WalletManager_recoveryWallet(void* wm_ptr, const char* path, const 
     // (const std::string &path, const std::string &password, const std::string &mnemonic,
     //                                     NetworkType nettype = MAINNET, uint64_t restoreHeight = 0, uint64_t kdf_rounds = 1,
     //                                     const std::string &seed_offset = {})
+    Secret secret(password);
+    Secret seed(mnemonic);
+    Secret offset(seedOffset);
     Monero::Wallet *wallet = wm->recoveryWallet(
                     std::string(path),
-                    std::string(password),
-                    std::string(mnemonic),
+                    secret.value,
+                    seed.value,
                     static_cast<Monero::NetworkType>(networkType),
                     restoreHeight,
                     kdfRounds,
-                    std::string(seedOffset));
+                    offset.value);
     return reinterpret_cast<void*>(wallet);
     DEBUG_END()
 }
@@ -2261,15 +2261,17 @@ void* MONERO_WalletManager_recoveryWallet(void* wm_ptr, const char* path, const 
 void* MONERO_WalletManager_createWalletFromKeys(void* wm_ptr, const char* path, const char* password, const char* language, int nettype, uint64_t restoreHeight, const char* addressString, const char* viewKeyString, const char* spendKeyString, uint64_t kdf_rounds) {
     DEBUG_START()
     Monero::WalletManager *wm = reinterpret_cast<Monero::WalletManager*>(wm_ptr);
+    Secret secret(password);
+    Secret spendKey(spendKeyString);
     Monero::Wallet *wallet = wm->createWalletFromKeys(
                     std::string(path),
-                    std::string(password),
+                    secret.value,
                     std::string(language),
                     static_cast<Monero::NetworkType>(nettype),
                     restoreHeight,
                     std::string(addressString),
                     std::string(viewKeyString),
-                    std::string(spendKeyString));
+                    spendKey.value);
     return reinterpret_cast<void*>(wallet);
     DEBUG_END()
 }
@@ -2277,8 +2279,9 @@ void* MONERO_WalletManager_createWalletFromKeys(void* wm_ptr, const char* path, 
 void* MONERO_WalletManager_createWalletFromDevice(void* wm_ptr, const char* path, const char* password, int nettype, const char* deviceName, uint64_t restoreHeight, const char* subaddressLookahead, const char* viewKeyString, const char* spendKeyString, uint64_t kdf_rounds) {
     DEBUG_START()
     Monero::WalletManager *wm = reinterpret_cast<Monero::WalletManager*>(wm_ptr);
+    Secret secret(password);
     Monero::Wallet *wallet = wm->createWalletFromDevice(std::string(path),
-        std::string(password),
+        secret.value,
         static_cast<Monero::NetworkType>(nettype),
         std::string(deviceName),
         restoreHeight,
@@ -2311,11 +2314,14 @@ void* MONERO_WalletManager_createWalletFromPolyseed(void* wm_ptr, const char* pa
                                                 bool newWallet, uint64_t restore_height, uint64_t kdf_rounds) {
     DEBUG_START()
     Monero::WalletManager *wm = reinterpret_cast<Monero::WalletManager*>(wm_ptr);
+    Secret secret(password);
+    Secret seed(mnemonic);
+    Secret seedPassphrase(passphrase);
     return wm->createWalletFromPolyseed(std::string(path),
-                                              std::string(password),
+                                              secret.value,
                                               static_cast<Monero::NetworkType>(nettype),
-                                              std::string(mnemonic),
-                                              std::string(passphrase),
+                                              seed.value,
+                                              seedPassphrase.value,
                                               newWallet,
                                               restore_height,
                                               kdf_rounds);
@@ -2342,7 +2348,8 @@ bool MONERO_WalletManager_walletExists(void* wm_ptr, const char* path) {
 bool MONERO_WalletManager_verifyWalletPassword(void* wm_ptr, const char* keys_file_name, const char* password, bool no_spend_key, uint64_t kdf_rounds) {
     DEBUG_START()
     Monero::WalletManager *wm = reinterpret_cast<Monero::WalletManager*>(wm_ptr);
-    return wm->verifyWalletPassword(std::string(keys_file_name), std::string(password), no_spend_key, kdf_rounds);
+    Secret secret(password);
+    return wm->verifyWalletPassword(std::string(keys_file_name), secret.value, no_spend_key, kdf_rounds);
     DEBUG_END()
 }
 
@@ -2351,7 +2358,8 @@ int MONERO_WalletManager_queryWalletDevice(void* wm_ptr, const char* keys_file_n
     DEBUG_START()
     Monero::WalletManager *wm = reinterpret_cast<Monero::WalletManager*>(wm_ptr);
     Monero::Wallet::Device device_type;
-    wm->queryWalletDevice(device_type, std::string(keys_file_name), std::string(password), kdf_rounds);
+    Secret secret(password);
+    wm->queryWalletDevice(device_type, std::string(keys_file_name), secret.value, kdf_rounds);
     return device_type;
     DEBUG_END()
 }

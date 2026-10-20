@@ -1,4 +1,6 @@
-OSX_MIN_VERSION=10.14
+# At least 11.0: Xcode 27's libc++ refuses older macOS targets. 13.0 matches
+# Skylight and Spice, whose security-key support (YubiKit) needs macOS 13.
+OSX_MIN_VERSION=13.0
 LD64_VERSION=609
 ifeq (aarch64, $(host_arch))
 CC_target=arm64-apple-$(host_os)
