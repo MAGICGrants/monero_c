@@ -52,6 +52,14 @@ else
 build_tests=OFF
 endif
 
+# release_type is CMake's build type; hosts/*.mk name their flags in lower case
+# (linux_release_CFLAGS, android_debug_CFLAGS).
+ifeq ($(release_type),Debug)
+flags_release_type=debug
+else
+flags_release_type=release
+endif
+
 base_build_dir=$(BASEDIR)/work/build
 base_staging_dir=$(BASEDIR)/work/staging
 base_download_dir=$(BASEDIR)/work/download
@@ -193,10 +201,10 @@ $(host_prefix)/share/config.site : config.site.in $(host_prefix)/.stamp_$(final_
             -e 's|@STRIP@|$(toolchain_path)$(host_STRIP)|' \
             -e 's|@build_os@|$(build_os)|' \
             -e 's|@host_os@|$(host_os)|' \
-            -e 's|@CFLAGS@|$(strip $(host_CFLAGS) $(host_$(release_type)_CFLAGS))|' \
-            -e 's|@CXXFLAGS@|$(strip $(host_CXXFLAGS) $(host_$(release_type)_CXXFLAGS))|' \
-            -e 's|@CPPFLAGS@|$(strip $(host_CPPFLAGS) $(host_$(release_type)_CPPFLAGS))|' \
-            -e 's|@LDFLAGS@|$(strip $(host_LDFLAGS) $(host_$(release_type)_LDFLAGS))|' \
+            -e 's|@CFLAGS@|$(strip $(host_CFLAGS) $(host_$(flags_release_type)_CFLAGS))|' \
+            -e 's|@CXXFLAGS@|$(strip $(host_CXXFLAGS) $(host_$(flags_release_type)_CXXFLAGS))|' \
+            -e 's|@CPPFLAGS@|$(strip $(host_CPPFLAGS) $(host_$(flags_release_type)_CPPFLAGS))|' \
+            -e 's|@LDFLAGS@|$(strip $(host_LDFLAGS) $(host_$(flags_release_type)_LDFLAGS))|' \
             -e 's|@allow_host_packages@|$(ALLOW_HOST_PACKAGES)|' \
             -e 's|@debug@|$(DEBUG)|' \
             $< > $@
@@ -213,10 +221,10 @@ $(host_prefix)/share/toolchain.cmake : toolchain.cmake.in $(host_prefix)/.stamp_
             -e 's|@STRIP@|$(toolchain_path)$(host_STRIP)|' \
             -e 's|@build_os@|$(build_os)|' \
             -e 's|@host_os@|$(host_os)|' \
-            -e 's|@CFLAGS@|$(strip $(host_CFLAGS) $(host_$(release_type)_CFLAGS))|' \
-            -e 's|@CXXFLAGS@|$(strip $(host_CXXFLAGS) $(host_$(release_type)_CXXFLAGS))|' \
-            -e 's|@CPPFLAGS@|$(strip $(host_CPPFLAGS) $(host_$(release_type)_CPPFLAGS))|' \
-            -e 's|@LDFLAGS@|$(strip $(host_LDFLAGS) $(host_$(release_type)_LDFLAGS))|' \
+            -e 's|@CFLAGS@|$(strip $(host_CFLAGS) $(host_$(flags_release_type)_CFLAGS))|' \
+            -e 's|@CXXFLAGS@|$(strip $(host_CXXFLAGS) $(host_$(flags_release_type)_CXXFLAGS))|' \
+            -e 's|@CPPFLAGS@|$(strip $(host_CPPFLAGS) $(host_$(flags_release_type)_CPPFLAGS))|' \
+            -e 's|@LDFLAGS@|$(strip $(host_LDFLAGS) $(host_$(flags_release_type)_LDFLAGS))|' \
             -e 's|@allow_host_packages@|$(ALLOW_HOST_PACKAGES)|' \
             -e 's|@debug@|$(DEBUG)|' \
             -e 's|@release_type@|$(release_type)|' \

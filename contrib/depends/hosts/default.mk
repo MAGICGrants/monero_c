@@ -11,15 +11,15 @@ default_host_NM = $(host_toolchain)nm
 define add_host_tool_func
 $(host_os)_$1?=$$(default_host_$1)
 $(host_arch)_$(host_os)_$1?=$$($(host_os)_$1)
-$(host_arch)_$(host_os)_$(release_type)_$1?=$$($(host_os)_$1)
+$(host_arch)_$(host_os)_$(flags_release_type)_$1?=$$($(host_os)_$1)
 host_$1=$$($(host_arch)_$(host_os)_$1)
 endef
 
 define add_host_flags_func
 $(host_arch)_$(host_os)_$1 += $($(host_os)_$1)
-$(host_arch)_$(host_os)_$(release_type)_$1 += $($(host_os)_$(release_type)_$1)
+$(host_arch)_$(host_os)_$(flags_release_type)_$1 += $($(host_os)_$(flags_release_type)_$1)
 host_$1 = $$($(host_arch)_$(host_os)_$1)
-host_$(release_type)_$1 = $$($(host_arch)_$(host_os)_$(release_type)_$1)
+host_$(flags_release_type)_$1 = $$($(host_arch)_$(host_os)_$(flags_release_type)_$1)
 endef
 
 $(foreach tool,CC CXX AR RANLIB STRIP NM LIBTOOL OTOOL INSTALL_NAME_TOOL,$(eval $(call add_host_tool_func,$(tool))))
