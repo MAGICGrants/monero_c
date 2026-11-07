@@ -6,14 +6,15 @@ repo="$1"
 
 if [[ "x$repo" == "x" ]];
 then
-    echo "Usage: $0 monero/wownero"
+    echo "Usage: $0 monero"
     exit 1
 fi
 
-if [[ "x$repo" != "xwownero" && "x$repo" != "xmonero" ]];
+if [[ "x$repo" != "xmonero" ]];
 then
-    echo "Usage: $0 monero/wownero"
-    echo "Invalid target given, only monero and wownero are supported targets"
+    echo "Usage: $0 monero"
+    echo "Invalid target given, only monero is supported"
+    exit 1
 fi
 
 if [[ ! -d "$repo" ]]
@@ -32,18 +33,6 @@ fi
 set -e
 cd $repo
 git am -3 --whitespace=fix --reject ../patches/$repo/*.patch
-if [[ "$repo" == "wownero" ]];
-then
-    pushd external/randomwow
-        git remote set-url origin https://github.com/mrcyjanek/randomwow.git
-    popd
-fi
-if [[ "$repo" == "zano" ]];
-then
-    pushd contrib/tor-connect
-         git remote set-url origin https://github.com/mrcyjanek/tor-connect.git
-    popd
-fi
 git submodule init
 git submodule update --init --recursive --force
 git am -3 <<EOF

@@ -1,16 +1,9 @@
 import { build$, CommandBuilder } from "jsr:@david/dax";
 import { dirname, join } from "jsr:@std/path";
-import {
-  downloadDependencies,
-  dylibInfos,
-  getFileInfo,
-  moneroCliInfo,
-  Target,
-  wowneroCliInfo,
-} from "./download_deps.ts";
-import { loadMoneroDylib, loadWowneroDylib, moneroSymbols, wowneroSymbols } from "../impls/monero.ts/mod.ts";
+import { downloadDependencies, dylibInfos, getFileInfo, moneroCliInfo, Target } from "./download_deps.ts";
+import { loadMoneroDylib, moneroSymbols } from "../impls/monero.ts/mod.ts";
 
-export type Coin = "monero" | "wownero";
+export type Coin = "monero";
 
 const target = `${Deno.build.os}_${Deno.build.arch}` as const;
 
@@ -39,15 +32,9 @@ export const moneroTsDylibNames = (coin: Coin) => ({
 export function loadDylib(coin: Coin, version: MoneroCVersion) {
   const dylibName = moneroTsDylibNames(coin)[target]!;
 
-  if (coin === "monero") {
-    const dylib = Deno.dlopen(`tests/dependencies/libs/${version}/${dylibName}`, moneroSymbols);
-    loadMoneroDylib(dylib);
-    return dylib;
-  } else {
-    const dylib = Deno.dlopen(`tests/dependencies/libs/${version}/${dylibName}`, wowneroSymbols);
-    loadWowneroDylib(dylib);
-    return dylib;
-  }
+  const dylib = Deno.dlopen(`tests/dependencies/libs/${version}/${dylibName}`, moneroSymbols);
+  loadMoneroDylib(dylib);
+  return dylib;
 }
 
 async function exists(path: string): Promise<boolean> {
@@ -88,16 +75,7 @@ export async function prepareMoneroCli() {
   await extract(path, "./tests/dependencies/monero-cli/");
 }
 
-export async function prepareWowneroCli() {
-  await downloadDependencies(wowneroCliInfo);
-  const path = join("./tests/dependencies", wowneroCliInfo.outDir ?? "", getFileInfo(wowneroCliInfo).names[0]);
-  await extract(path, "./tests/dependencies/wownero-cli/");
-}
-
-export function prepareCli(coin: Coin) {
-  if (coin === "wownero") {
-    return prepareWowneroCli();
-  }
+export function prepareCli(_coin: Coin) {
   return prepareMoneroCli();
 }
 
