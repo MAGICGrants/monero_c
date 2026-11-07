@@ -93,22 +93,8 @@ if (${MONERO_FLAVOR} STREQUAL "monero")
     endif ()
 
     set(WALLET_TARGETS wallet_api ${wallet_api_LIB_DEPENDS} lwsf-api) # wallet_api_LIB_DEPENDS
-elseif(${MONERO_FLAVOR} STREQUAL "wownero")
-    set(WALLET_TARGETS wallet_api ${wallet_api_LIB_DEPENDS}) # wallet_api_LIB_DEPENDS
-elseif(${MONERO_FLAVOR} STREQUAL "zano")
-    find_package(Boost 1.71 REQUIRED COMPONENTS system filesystem thread timer date_time chrono regex serialization atomic program_options)
-    find_package(OpenSSL REQUIRED)
-    set(WALLET_TARGETS 
-        wallet
-        general
-        tor-connect
-        crypto
-        currency_core
-        common    
-        zlibstatic
-
-        ${Boost_LIBRARIES}
-        ${OpenSSL_LIBRARIES})
+else()
+    message(FATAL_ERROR "MONERO_FLAVOR must be monero, got ${MONERO_FLAVOR}")
 endif()
 
 
@@ -133,46 +119,18 @@ if(${HOST_ABI} STREQUAL "x86_64-apple-darwin11" OR ${HOST_ABI} STREQUAL "aarch64
     set_target_properties(wallet2_api_c PROPERTIES NO_SONAME 1)
 endif()
 
-if (${MONERO_FLAVOR} STREQUAL "monero")
-    target_compile_definitions(wallet2_api_c PRIVATE FLAVOR_MONERO)
-    set(BCUR_ENABLED bc-ur)
-elseif(${MONERO_FLAVOR} STREQUAL "wownero")
-    target_compile_definitions(wallet2_api_c PRIVATE FLAVOR_WOWNERO)
-elseif(${MONERO_FLAVOR} STREQUAL "zano")
-    target_compile_definitions(wallet2_api_c PRIVATE FLAVOR_ZANO)
-endif()
+target_compile_definitions(wallet2_api_c PRIVATE FLAVOR_MONERO)
+set(BCUR_ENABLED bc-ur)
 
 if(NOT ${HOST_ABI} STREQUAL "x86_64-apple-darwin11" AND NOT ${HOST_ABI} STREQUAL "aarch64-apple-darwin11" AND NOT ${HOST_ABI} STREQUAL "aarch64-apple-darwin" AND NOT ${HOST_ABI} STREQUAL "x86_64-apple-darwin" AND NOT ${HOST_ABI} STREQUAL "host-apple-darwin" AND NOT ${HOST_ABI} STREQUAL "x86_64-host-apple-darwin" AND NOT ${HOST_ABI} STREQUAL "aarch64-host-apple-darwin" AND NOT ${HOST_ABI} STREQUAL "host-apple-ios" AND NOT ${HOST_ABI} STREQUAL "aarch64-apple-ios" AND NOT ${HOST_ABI} STREQUAL "aarch64-apple-iossimulator" AND NOT ${HOST_ABI} STREQUAL "x86_64-apple-iossimulator")
     set_target_properties(wallet2_api_c PROPERTIES LINK_FLAGS "-Wl,--exclude-libs,ALL")
 endif()
 
-if (${MONERO_FLAVOR} STREQUAL "zano")
-    include_directories(
-        ${CMAKE_SOURCE_DIR}/build/${HOST_ABI}/zano_build/contrib/zlib
-    )
-endif()
-
-if (NOT (${MONERO_FLAVOR} STREQUAL "monero"))
-    add_subdirectory("${CMAKE_SOURCE_DIR}/../${MONERO_FLAVOR}" ${CMAKE_BINARY_DIR}/${MONERO_FLAVOR}_build EXCLUDE_FROM_ALL)
-endif ()
-
 if(${HOST_ABI} STREQUAL "x86_64-apple-darwin11" OR ${HOST_ABI} STREQUAL "aarch64-apple-darwin11" OR ${HOST_ABI} STREQUAL "x86_64-apple-darwin" OR ${HOST_ABI} STREQUAL "aarch64-apple-darwin" OR ${HOST_ABI} STREQUAL "host-apple-darwin" OR ${HOST_ABI} STREQUAL "x86_64-host-apple-darwin" OR ${HOST_ABI} STREQUAL "aarch64-host-apple-darwin" OR ${HOST_ABI} STREQUAL "host-apple-ios" OR ${HOST_ABI} STREQUAL "aarch64-apple-ios" OR ${HOST_ABI} STREQUAL "aarch64-apple-iossimulator" OR ${HOST_ABI} STREQUAL "x86_64-apple-iossimulator")
-    if (${MONERO_FLAVOR} STREQUAL "monero")
-        set(EXPORTED_SYMBOLS_FILE ${CMAKE_CURRENT_SOURCE_DIR}/monero_libwallet2_api_c.exp)
-    elseif(${MONERO_FLAVOR} STREQUAL "wownero")
-        set(EXPORTED_SYMBOLS_FILE ${CMAKE_CURRENT_SOURCE_DIR}/wownero_libwallet2_api_c.exp)
-    elseif(${MONERO_FLAVOR} STREQUAL "zano")
-        set(EXPORTED_SYMBOLS_FILE ${CMAKE_CURRENT_SOURCE_DIR}/zano_libwallet2_api_c.exp)
-    endif()
+    set(EXPORTED_SYMBOLS_FILE ${CMAKE_CURRENT_SOURCE_DIR}/monero_libwallet2_api_c.exp)
 
     set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -exported_symbols_list ${EXPORTED_SYMBOLS_FILE}")
     set_target_properties(${TARGET} PROPERTIES LINK_DEPENDS ${EXPORTED_SYMBOLS_FILE})
-endif()
-
-
-if(${MONERO_FLAVOR} STREQUAL "wownero")
-    add_subdirectory(wownero-seed EXCLUDE_FROM_ALL)
-    set(EXTRA_LIBS_WOWNEROSEED wownero-seed)
 endif()
 
 #get_cmake_property(_variableNames VARIABLES)
@@ -182,12 +140,10 @@ endif()
 #endforeach()
 #message(SEND_ERROR "${Boost_LIBRARIES}")
 #message(SEND_ERROR "${WALLET_TARGETS}
-#                        ${EXTRA_LIBS_WOWNEROSEED}
 #                        ${EXTRA_LIBS_ANDROID}")
 
 target_link_libraries(  wallet2_api_c
 
                         ${WALLET_TARGETS}
-                        ${EXTRA_LIBS_WOWNEROSEED}
                         ${EXTRA_LIBS_ANDROID}
                        )

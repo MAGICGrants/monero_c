@@ -143,46 +143,6 @@ export async function downloadFiles(outDir: string, target: Target, ...infos: Do
   }
 }
 
-export const wowneroCliInfo: DownloadInfo = {
-  mirrors: [
-    "https://static.mrcyjanek.net/download_mirror/",
-    "https://codeberg.org/wownero/wownero/releases/download/v0.11.2.0/",
-  ],
-  file: {
-    linux_aarch64: {
-      names: ["wownero-aarch64-linux-gnu-59db3fe8d.tar.bz2"],
-      sha256: "07ce678302c07a6e79d90be65cbda243d843d414fbadb30f972d6c226575cfa7",
-    },
-    linux_x86_64: {
-      names: ["wownero-x86_64-linux-gnu-59db3fe8d.tar.bz2"],
-      sha256: "03880967c70cc86558d962b8a281868c3934238ea457a36174ba72b99d70107e",
-    },
-
-    darwin_aarch64: {
-      names: ["wownero-aarch64-apple-darwin11-59db3fe8d.tar.bz2"],
-      sha256: "25ff454a92b1cf036df5f28cdd2c63dcaf4b03da7da9403087371f868827c957",
-    },
-    darwin_x86_64: {
-      names: ["wownero-x86_64-apple-darwin11-59db3fe8d.tar.bz2"],
-      sha256: "7e9b6a84a560ed7a9ed7117c6f07fb228d77a06afac863d0ea1dbf833c4eddf6",
-    },
-
-    windows_x86_64: {
-      names: ["wownero-x86_64-w64-mingw32-59db3fe8d.zip"],
-      sha256: "7e0ed84afa51e3b403d635c706042859094eb6850de21c9e82cb0a104425510e",
-    },
-
-    android_aarch64: {
-      overrideMirrors: [
-        "https://static.mrcyjanek.net/download_mirror/",
-        "https://codeberg.org/wownero/wownero/releases/download/v0.11.1.0/",
-      ],
-      names: ["wownero-aarch64-linux-android-v0.11.1.0.tar.bz2"],
-      sha256: "236188f8d8e7fad2ff35973f8c2417afffa8855d1a57b4c682fff5b199ea40f5",
-    },
-  },
-};
-
 export const moneroCliInfo: DownloadInfo = {
   mirrors: [
     "https://static.mrcyjanek.net/download_mirror/",
@@ -221,11 +181,10 @@ export const moneroCliInfo: DownloadInfo = {
 
 export const dylibInfos: Record<Coin, DownloadInfo[]> = {
   monero: [],
-  wownero: [],
 };
 
 for (const tag of await getMoneroCTags()) {
-  for (const coin of ["monero", "wownero"] as const) {
+  for (const coin of ["monero"] as const) {
     dylibInfos[coin].push({
       mirrors: [
         `https://static.mrcyjanek.net/download_mirror/libs/${tag}/`,
@@ -271,7 +230,6 @@ if (import.meta.main) {
       "./download_mirror",
       target,
       moneroCliInfo,
-      wowneroCliInfo,
       ...Object.values(dylibInfos).flat(),
     );
   }

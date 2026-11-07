@@ -19,7 +19,6 @@ There are at least two ways to do so:
   } from "https://raw.githubusercontent.com/MrCyjaneK/monero_c/master/impls/monero.ts/mod.ts";
 
   // Try to load dylib from the default lib/* path
-  // You can also use loadWowneroDylib for Wownero
   loadMoneroDylib();
 
   const wm = await WalletManager.new();

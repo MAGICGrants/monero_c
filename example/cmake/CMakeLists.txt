@@ -4,14 +4,12 @@ include(CMakePrintHelpers)
 
 set(MONERO_C_COMMIT 36e61433c78750317ced29f0fc94ad22af16111d)
 set(MONERO_C_MIRROR https://git.mrcyjanek.net/mrcyjanek/monero_c)
-set(MONERO_C_WOWNERO OFF)
 set(MONERO_C_MONERO ON)
 
 
 cmake_print_variables(MONERO_C_COMMIT)
 cmake_print_variables(MONERO_C_MIRROR)
 cmake_print_variables(MONERO_C_MONERO)
-cmake_print_variables(MONERO_C_WOWNERO)
 
 project(
   monero_c
@@ -25,16 +23,11 @@ execute_process(WORKING_DIRECTORY monero_c COMMAND git checkout ${MONERO_C_COMMI
 execute_process(WORKING_DIRECTORY monero_c COMMAND git submodule update --recursive --force --init)
 
 execute_process(COMMAND rm monero_c/monero/.patch-applied)
-execute_process(COMMAND rm monero_c/wownero/.patch-applied)
 
 # apply patches
 
 if (MONERO_C_MONERO)
     execute_process(WORKING_DIRECTORY monero_c COMMAND ./apply_patches.sh monero)
-endif()
-
-if (MONERO_C_WOWNERO)
-    execute_process(WORKING_DIRECTORY monero_c COMMAND ./apply_patches.sh wownero)
 endif()
 
 # actually.. build the software

@@ -1,7 +1,7 @@
 import { $, createWalletViaCli, getMoneroCTags, prepareCli, prepareMoneroC } from "./utils.ts";
 
 const coin = Deno.env.get("COIN");
-if (coin !== "monero" && coin !== "wownero") {
+if (coin !== "monero") {
   throw new Error("COIN env var invalid or missing");
 }
 
