@@ -54,12 +54,17 @@ then
 fi
 cd $(dirname $0)
 WDIR=$PWD
+# Reproducible builds. ZERO_AR_DATE makes Apple's ar and ld64 write zero
+# instead of file mtimes into archives and the Mach-O debug map. The
+# dependency build below runs under `env -i`, so both it and the caller's
+# SOURCE_DATE_EPOCH are passed in explicitly.
+export ZERO_AR_DATE=1
 pushd contrib/depends
     if [[ -d $HOST_ABI ]];
     then
         echo "Not building depends, directory exists"
     else
-        env -i PATH="$PATH" CC=gcc CXX=g++ make "$NPROC" HOST="$HOST_ABI" DEPENDS_UNTRUSTED_FAST_BUILDS=$DEPENDS_UNTRUSTED_FAST_BUILDS
+        env -i PATH="$PATH" ZERO_AR_DATE=1 ${SOURCE_DATE_EPOCH:+SOURCE_DATE_EPOCH="$SOURCE_DATE_EPOCH"} CC=gcc CXX=g++ make "$NPROC" HOST="$HOST_ABI" DEPENDS_UNTRUSTED_FAST_BUILDS=$DEPENDS_UNTRUSTED_FAST_BUILDS
     fi
 popd
 
