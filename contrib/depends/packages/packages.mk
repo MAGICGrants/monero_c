@@ -1,4 +1,4 @@
-packages:=boost openssl zeromq libiconv expat unbound polyseed
+packages:=boost openssl zeromq libiconv polyseed
 
 # ccache is useless in gitian builds
 ifneq ($(GITIAN),1)

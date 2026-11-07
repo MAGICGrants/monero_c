@@ -1,0 +1,303 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: MAGIC Grants <info@magicgrants.org>
+Date: Sat, 7 Nov 2026 14:27:43 -0600
+Subject: [PATCH] Remove libunbound DNS resolution
+
+monero_c no longer links libunbound. Skylight and Spice resolve OpenAlias
+in the app (DNSSEC over Tor), so the library's own resolver was dead
+weight: a recursive DNSSEC resolver with a steady stream of security
+advisories, which would also send DNS queries outside Tor if anything
+ever called it.
+
+DNSResolver keeps its API so every caller compiles unchanged, but each
+lookup now returns no records and reports DNSSEC as unavailable. OpenAlias
+resolution (WalletManager::resolveOpenAlias), checkUpdates and DNS
+checkpoints find nothing. tools::on_startup() no longer creates a
+libunbound context to check whether it was built with threads, and CMake
+no longer requires, includes or links libunbound.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ CMakeLists.txt            |   3 -
+ external/CMakeLists.txt   |  13 ----
+ src/common/CMakeLists.txt |   1 -
+ src/common/dns_utils.cpp  | 136 ++------------------------------------
+ src/common/util.cpp       |  20 ------
+ 5 files changed, 7 insertions(+), 166 deletions(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 22364d2..30271e1 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -676,9 +676,6 @@ ExternalProject_Add(generate_translations_header
+ include_directories("${CMAKE_CURRENT_BINARY_DIR}/translations")
+ add_subdirectory(external)
+ 
+-# Final setup for libunbound
+-include_directories(${UNBOUND_INCLUDE_DIR})
+-
+ # Final setup for easylogging++
+ include_directories(${EASYLOGGING_INCLUDE})
+ link_directories(${EASYLOGGING_LIBRARY_DIRS})
+diff --git a/external/CMakeLists.txt b/external/CMakeLists.txt
+index 7ab79e0..a3651f8 100644
+--- a/external/CMakeLists.txt
++++ b/external/CMakeLists.txt
+@@ -28,19 +28,6 @@
+ # 
+ # Parts of this file are originally copyright (c) 2012-2013 The Cryptonote developers
+ 
+-find_package(Unbound)
+-
+-if(NOT UNBOUND_INCLUDE_DIR)
+-  die("Could not find libunbound")
+-else()
+-  message(STATUS "Found libunbound include (unbound.h) in ${UNBOUND_INCLUDE_DIR}")
+-  if(UNBOUND_LIBRARIES)
+-    message(STATUS "Found libunbound library")
+-  else()
+-    die("Found libunbound includes, but could not find libunbound library. Please make sure you have installed libunbound or libunbound-dev or the equivalent")
+-  endif()
+-endif()
+-
+ add_subdirectory(db_drivers)
+ add_subdirectory(easylogging++)
+ add_subdirectory(qrcodegen)
+diff --git a/src/common/CMakeLists.txt b/src/common/CMakeLists.txt
+index ee58786..33374d2 100644
+--- a/src/common/CMakeLists.txt
++++ b/src/common/CMakeLists.txt
+@@ -75,7 +75,6 @@ endif()
+ target_link_libraries(common
+   PUBLIC
+     cncrypto
+-    ${UNBOUND_LIBRARIES}
+     ${LIBUNWIND_LIBRARIES}
+     ${Boost_DATE_TIME_LIBRARY}
+     ${Boost_FILESYSTEM_LIBRARY}
+diff --git a/src/common/dns_utils.cpp b/src/common/dns_utils.cpp
+index c8b143e..0a481b6 100644
+--- a/src/common/dns_utils.cpp
++++ b/src/common/dns_utils.cpp
+@@ -27,8 +27,6 @@
+ // THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ 
+ #include "common/dns_utils.h"
+-// check local first (in the event of static or in-source compilation of libunbound)
+-#include "unbound.h"
+ 
+ #include <deque>
+ #include <set>
+@@ -98,19 +96,6 @@ get_builtin_cert(void)
+ }
+ */
+ 
+-/** return the built in root DS trust anchor */
+-static const char* const*
+-get_builtin_ds(void)
+-{
+-  static const char * const ds[] =
+-  {
+-    ". IN DS 20326 8 2 E06D44B80B8F1D39A95C0B0D7C65D08458E880409BBC683457104237C7F8EC8D\n",
+-    ". IN DS 38696 8 2 683D2D0ACB8C9B712A1948B27F741219298D0A450D612C483AF444A4C0FB2B16\n",
+-    NULL
+-  };
+-  return ds;
+-}
+-
+ /************************************************************
+  ************************************************************
+  ***********************************************************/
+@@ -224,103 +209,21 @@ private:
+   type* ptr;
+ };
+ 
+-typedef class scoped_ptr<ub_result,ub_resolve_free> ub_result_ptr;
+-
++// DNS resolution is disabled in this build: monero_c does not link
++// libunbound. DNSResolver keeps its API, but every lookup returns no records
++// and reports DNSSEC as unavailable, so OpenAlias resolution, update checks
++// and DNS checkpoints find nothing and never touch the network.
+ struct DNSResolverData
+ {
+-  ub_ctx* m_ub_context;
+-};
+-
+-// work around for bug https://www.nlnetlabs.nl/bugs-script/show_bug.cgi?id=515 needed for it to compile on e.g. Debian 7
+-class string_copy {
+-public:
+-    string_copy(const char *s): str(strdup(s)) {}
+-    ~string_copy() { free(str); }
+-    operator char*() { return str; }
+-
+-public:
+-    char *str;
+ };
+ 
+-static void add_anchors(ub_ctx *ctx)
+-{
+-  const char * const *ds = ::get_builtin_ds();
+-  while (*ds)
+-  {
+-    MINFO("adding trust anchor: " << *ds);
+-    ub_ctx_add_ta(ctx, string_copy(*ds++));
+-  }
+-}
+-
+ DNSResolver::DNSResolver() : m_data(new DNSResolverData())
+ {
+-  int use_dns_public = 0;
+-  std::vector<std::string> dns_public_addr;
+-  const char *DNS_PUBLIC = getenv("DNS_PUBLIC");
+-  if (DNS_PUBLIC)
+-  {
+-    dns_public_addr = tools::dns_utils::parse_dns_public(DNS_PUBLIC);
+-    if (!dns_public_addr.empty())
+-    {
+-      MGINFO("Using public DNS server(s): " << boost::join(dns_public_addr, ", ") << " (TCP)");
+-      use_dns_public = 1;
+-    }
+-    else
+-    {
+-      MERROR("Failed to parse DNS_PUBLIC");
+-    }
+-  }
+-
+-  // init libunbound context
+-  m_data->m_ub_context = ub_ctx_create();
+-
+-  if (use_dns_public)
+-  {
+-    for (const auto &ip: dns_public_addr)
+-      ub_ctx_set_fwd(m_data->m_ub_context, string_copy(ip.c_str()));
+-    ub_ctx_set_option(m_data->m_ub_context, string_copy("do-udp:"), string_copy("no"));
+-    ub_ctx_set_option(m_data->m_ub_context, string_copy("do-tcp:"), string_copy("yes"));
+-  }
+-  else {
+-    // look for "/etc/resolv.conf" and "/etc/hosts" or platform equivalent
+-    ub_ctx_resolvconf(m_data->m_ub_context, NULL);
+-    ub_ctx_hosts(m_data->m_ub_context, NULL);
+-  }
+-
+-  add_anchors(m_data->m_ub_context);
+-
+-  if (!DNS_PUBLIC)
+-  {
+-    // if no DNS_PUBLIC specified, we try a lookup to what we know
+-    // should be a valid DNSSEC record, and switch to known good
+-    // DNSSEC resolvers if verification fails
+-    bool available, valid;
+-    static const char *probe_hostname = "updates.moneropulse.org";
+-    auto records = get_txt_record(probe_hostname, available, valid);
+-    if (!valid)
+-    {
+-      MINFO("Failed to verify DNSSEC record from " << probe_hostname << ", falling back to TCP with well known DNSSEC resolvers");
+-      ub_ctx_delete(m_data->m_ub_context);
+-      m_data->m_ub_context = ub_ctx_create();
+-      add_anchors(m_data->m_ub_context);
+-      for (const auto &ip: DEFAULT_DNS_PUBLIC_ADDR)
+-        ub_ctx_set_fwd(m_data->m_ub_context, string_copy(ip));
+-      ub_ctx_set_option(m_data->m_ub_context, string_copy("do-udp:"), string_copy("no"));
+-      ub_ctx_set_option(m_data->m_ub_context, string_copy("do-tcp:"), string_copy("yes"));
+-    }
+-  }
+ }
+ 
+ DNSResolver::~DNSResolver()
+ {
+-  if (m_data)
+-  {
+-    if (m_data->m_ub_context != NULL)
+-    {
+-      ub_ctx_delete(m_data->m_ub_context);
+-    }
+-    delete m_data;
+-  }
++  delete m_data;
+ }
+ 
+ std::vector<std::string> DNSResolver::get_record(const std::string& url, int record_type, boost::optional<std::string> (*reader)(const char *,size_t), bool& dnssec_available, bool& dnssec_valid)
+@@ -329,33 +232,8 @@ std::vector<std::string> DNSResolver::get_record(const std::string& url, int rec
+   dnssec_available = false;
+   dnssec_valid = false;
+ 
+-  // destructor takes care of cleanup
+-  ub_result_ptr result;
+-
+-  MDEBUG("Performing DNSSEC " << get_record_name(record_type) << " record query for " << url);
+-
+-  // call DNS resolver, blocking.  if return value not zero, something went wrong
+-  if (!ub_resolve(m_data->m_ub_context, string_copy(url.c_str()), record_type, DNS_CLASS_IN, &result))
+-  {
+-    dnssec_available = (result->secure || result->bogus);
+-    dnssec_valid = result->secure && !result->bogus;
+-    if (dnssec_available && !dnssec_valid)
+-      MWARNING("Invalid DNSSEC " << get_record_name(record_type) << " record signature for " << url << ": " << result->why_bogus);
+-    if (result->havedata)
+-    {
+-      for (size_t i=0; result->data[i] != NULL; i++)
+-      {
+-        boost::optional<std::string> res = (*reader)(result->data[i], result->len[i]);
+-        if (res)
+-        {
+-          // do not dump dns record directly from dns into log
+-          MINFO("Found " << get_record_name(record_type) << " record for " << url);
+-          addresses.push_back(std::move(*res));
+-        }
+-      }
+-    }
+-  }
+-
++  (void)reader;
++  MDEBUG("Not performing " << get_record_name(record_type) << " record query for " << url << ": DNS resolution is disabled in this build");
+   return addresses;
+ }
+ 
+diff --git a/src/common/util.cpp b/src/common/util.cpp
+index f3b39fe..8be2c28 100644
+--- a/src/common/util.cpp
++++ b/src/common/util.cpp
+@@ -54,8 +54,6 @@
+   #include <fstream>
+ #endif
+ 
+-#include "unbound.h"
+-
+ #include "include_base_utils.h"
+ #include "file_io_utils.h"
+ #include "wipeable_string.h"
+@@ -707,21 +705,6 @@ std::string get_nix_version_display_string()
+     return std::error_code(code, std::system_category());
+   }
+ 
+-  static bool unbound_built_with_threads()
+-  {
+-    ub_ctx *ctx = ub_ctx_create();
+-    if (!ctx) return false; // cheat a bit, should not happen unless OOM
+-    char *monero = strdup("monero"), *unbound = strdup("unbound");
+-    ub_ctx_zone_add(ctx, monero, unbound); // this calls ub_ctx_finalize first, then errors out with UB_SYNTAX
+-    free(unbound);
+-    free(monero);
+-    // if no threads, bails out early with UB_NOERROR, otherwise fails with UB_AFTERFINAL id already finalized
+-    bool with_threads = ub_ctx_async(ctx, 1) != 0; // UB_AFTERFINAL is not defined in public headers, check any error
+-    ub_ctx_delete(ctx);
+-    MINFO("libunbound was built " << (with_threads ? "with" : "without") << " threads");
+-    return with_threads;
+-  }
+-
+   bool sanitize_locale()
+   {
+     // boost::filesystem throws for "invalid" locales, such as en_US.UTF-8, or kjsdkfs,
+@@ -830,9 +813,6 @@ std::string get_nix_version_display_string()
+     OPENSSL_init_ssl(0, NULL);
+ #endif
+ 
+-    if (!unbound_built_with_threads())
+-      MCLOG_RED(el::Level::Warning, "global", "libunbound was not built with threads enabled - crashes may occur");
+-
+     return true;
+   }
+   void set_strict_default_file_permissions(bool strict)
+-- 
+2.54.0 (Apple Git-157)
+
