@@ -3,7 +3,7 @@ import { assertEquals } from "jsr:@std/assert";
 import { WalletManager } from "../impls/monero.ts/mod.ts";
 import { loadDylib } from "./utils.ts";
 
-const coin = Deno.args[0] as "monero" | "wownero";
+const coin = Deno.args[0] as "monero";
 const version = Deno.args[1];
 const walletInfo = JSON.parse(Deno.args[2]);
 

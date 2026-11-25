@@ -1,1 +1,0 @@
-../monero_libwallet2_api_c/CMakeLists.txt

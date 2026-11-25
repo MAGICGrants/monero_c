@@ -3,19 +3,6 @@
 	url = https://github.com/monero-project/monero
 	branch = release-v0.18
 	shallow = true
-[submodule "wownero"]
-	path = wownero
-	url = https://codeberg.org/wownero/wownero
-	shallow = true
-[submodule "zano"]
-	path = zano
-	url = https://github.com/hyle-team/zano
-	shallow = false
-[submodule "wownero_libwallet2_api_c/wownero-seed"]
-	path = wownero_libwallet2_api_c/wownero-seed
-	url = https://github.com/MrCyjaneK/wownero-seed
-	branch = cyjan-namespace2
-	shallow = true
 [submodule "lwsf"]
 	path = lwsf
 	url = https://github.com/magicgrants/lwsf

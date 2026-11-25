@@ -4,7 +4,7 @@ import { assert, assertEquals } from "jsr:@std/assert";
 import { $, loadDylib, prepareCli, prepareMoneroC } from "./utils.ts";
 
 const coin = Deno.env.get("COIN");
-if (coin !== "monero" && coin !== "wownero") {
+if (coin !== "monero") {
   throw new Error("COIN env var invalid or missing");
 }
 
@@ -32,15 +32,10 @@ async function syncBlockchain(wallet: Wallet): Promise<bigint> {
 }
 
 // TODO: Change for custom address on CI
-const WOWNERO_NODE_URL = "https://node3.monerodevs.org:34568";
-const MONERO_NODE_URL = "https://nodes.hashvault.pro:18081";
-const NODE_URL = coin === "monero" ? MONERO_NODE_URL : WOWNERO_NODE_URL;
+const NODE_URL = "https://nodes.hashvault.pro:18081";
 
-const WOWNERO_DESTINATION_ADDRESS =
-  "WW3Zetw4Gg5Rk88ViCm8H8Ft8BqgAQ5DbTLZC1whv8GNFJPSoGfLViW3dAAb4Bcqpz2M1y31pZykd4ZKd8GH1UyF1fwEFg5mS";
-const MONERO_DESTINATION_ADDRESS =
+const DESTINATION_ADDRESS =
   "89BoVWjqdGVe68wdxbYurXR8sXaEb96eWKYRPxdT6wSCfZYK6XSHoj5ZRXQLtd7GzL2B2PD7Lb7GSKupkXMWjQVFAEb1CK8";
-const DESTINATION_ADDRESS = coin === "monero" ? MONERO_DESTINATION_ADDRESS : WOWNERO_DESTINATION_ADDRESS;
 
 const BILLION = 10n ** 9n;
 
@@ -68,7 +63,7 @@ async function clearWallets() {
 loadDylib(coin, "next");
 
 Deno.test("0001-polyseed.patch", async (t) => {
-  const WALLETS: Record<"monero" | "wownero", WalletInfo[]> = {
+  const WALLETS: Record<"monero", WalletInfo[]> = {
     monero: [
       //#region Cake wallet, no offset
       {
@@ -191,20 +186,6 @@ Deno.test("0001-polyseed.patch", async (t) => {
         secretViewKey: "d5676e49438b0cd38c6a699ab783c11f21e1a7ebc1c9174121e37456a97f380d",
       },
       //#endregion
-    ],
-    wownero: [
-      {
-        name: "English Wowlet",
-        password: "englishwallet",
-        seed: "fragile proud oven shove trend visit oxygen dove pledge entire pencil exist throw type large chase",
-        restoreHeight: 0n,
-        address: "Wo4ExnCfajHZcVY9Q4XgjTYHu9GwyT9E7dZQuoFhY7HNWr2X6iD2wuB1asHQ1DVEtNYSLjqiCzJVDg5ZKeWnbKDe1LD9Wwy91",
-        publicSpendKey: "88c53568fd38c2f957f229a7d4dabb142e4fcfd7c128da922b63e4f4df25b26e",
-        secretSpendKey: "b131442ee0aecd410947a74bf622e2833397f372ee843fc3d291cb16a343e308",
-        publicViewKey: "ea7a909bc832037db14c6a537357bbf2eedee84b7d00e9a2b1d718d92fe52693",
-        secretViewKey: "96e03a70a4956656be6cc1fa2252f159ae0b2d2fdc21f761fc7e8d0316931708",
-      },
-      // TODO: Add other localized wallets for Wownero
     ],
   };
 
@@ -336,7 +317,7 @@ Deno.test("0002-wallet-background-sync-with-just-the-view-key.patch (stopBackgro
 });
 
 Deno.test("0004-coin-control.patch", {
-  ignore: coin === "wownero" || !(
+  ignore: !(
     Deno.env.get("SECRET_WALLET_PASSWORD") &&
     Deno.env.get("SECRET_WALLET_MNEMONIC") &&
     Deno.env.get("SECRET_WALLET_RESTORE_HEIGHT")
@@ -537,7 +518,7 @@ Deno.test("0009-Add-recoverDeterministicWalletFromSpendKey.patch", async () => {
 });
 
 Deno.test("0012-WIP-UR-functions.patch", {
-  ignore: coin === "wownero" || !(
+  ignore: !(
     Deno.env.get("SECRET_WALLET_PASSWORD") &&
     Deno.env.get("SECRET_WALLET_MNEMONIC") &&
     Deno.env.get("SECRET_WALLET_RESTORE_HEIGHT")
@@ -576,7 +557,6 @@ Deno.test("0012-WIP-UR-functions.patch", {
     if (method === "UR") {
       await t.step({
         name: "Sync wallets (UR)",
-        ignore: coin === "wownero", // Wownero doesn't have UR methods
         fn: async () => {
           try {
             const outputs = await online.exportOutputsUR(130n, false);
@@ -596,7 +576,6 @@ Deno.test("0012-WIP-UR-functions.patch", {
 
       await t.step({
         name: "Transaction (UR)",
-        ignore: coin === "wownero",
         fn: async () => {
           const transaction = await online.createTransaction(DESTINATION_ADDRESS, 1n * BILLION, 0, 0);
           if (!transaction) {

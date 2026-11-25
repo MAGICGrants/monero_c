@@ -2434,11 +2434,4 @@ export const moneroSymbols = {
 
 export type MoneroSymbols = typeof moneroSymbols;
 
-type ReplaceMonero<T extends string> = T extends `MONERO${infer Y}` ? `WOWNERO${Y}` : never;
-export type WowneroSymbols = { [Key in keyof MoneroSymbols as ReplaceMonero<Key>]: MoneroSymbols[Key] };
-
 export type SymbolName = keyof MoneroSymbols extends `MONERO_${infer SymbolName}` ? SymbolName : never;
-
-export const wowneroSymbols = Object.fromEntries(
-  Object.entries(moneroSymbols).map(([key, value]) => [key.replace("MONERO", "WOWNERO"), value]),
-) as WowneroSymbols;

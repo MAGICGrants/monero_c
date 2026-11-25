@@ -13,7 +13,6 @@ OPTION(BUILD_TESTS "Build tests." OFF)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 SET(STATIC ON)
-SET(UNBOUND_STATIC ON)
 SET(ARCH "default")
 
 SET(BUILD_TESTS @build_tests@)
@@ -28,9 +27,6 @@ SET(Readline_ROOT_DIR @prefix@)
 SET(Readline_INCLUDE_DIR @prefix@/include)
 SET(Readline_LIBRARY @prefix@/lib/libreadline.a)
 SET(Terminfo_LIBRARY @prefix@/lib/libtinfow.a)
-
-SET(UNBOUND_INCLUDE_DIR @prefix@/include)
-SET(UNBOUND_LIBRARIES @prefix@/lib/libunbound.a)
 
 if(NOT CMAKE_SYSTEM_NAME STREQUAL "Android")
 SET(LIBUNWIND_INCLUDE_DIR @prefix@/include)
@@ -196,7 +192,6 @@ endif()
 
 link_directories(@prefix@/lib)
 include_directories(@prefix@/include)
-include_directories(@prefix@/include/wownero_seed)
 
 add_definitions(-DPOLYSEED_STATIC=ON)
 add_definitions(-DMOBILE_WALLET_BUILD)

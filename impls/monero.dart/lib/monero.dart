@@ -30,7 +30,7 @@ library;
 //   final dst_addr_ = dst_addr.toNativeUtf8().cast<Char>(); -----------------| Cast the strings into Chars so it can be used as a parameter in a function     |
 //   final payment_id_ = payment_id.toNativeUtf8().cast<Char>(); -------------| generated via ffigen                                                           |
 //   final preferredInputs_ = preferredInputs.join(defaultSeparatorStr).toNativeUtf8().cast<Char>(); <---------------------------------------------------------/
-//   final s = lib!.WOWNERO_Wallet_createTransaction(-------------|
+//   final s = lib!.MONERO_Wallet_createTransaction(--------------|
 //     ptr,                                                       |
 //     dst_addr_,                                                 |
 //     payment_id_,                                               |

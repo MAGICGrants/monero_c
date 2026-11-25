@@ -35,7 +35,7 @@ yourself](https://github.com/MrCyjaneK/unnamed_monero_wallet/blob/master-rewrite
 ```bash
 $ ./build_moneroc.sh
     --prebuild # allow downloads of prebuilds
-    --coin # monero/wownero 
+    --coin # monero
     --tag v0.18.3.3-RC45 # which tag to build / download
     --triplet x86_64-linux-android # which triplet to build / download
     --location android/.../jniLibs/x86_64 # where to but the libraries

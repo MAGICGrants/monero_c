@@ -1,13 +1,17 @@
 package=openssl
-$(package)_version=3.0.13
-$(package)_download_path=https://www.openssl.org/source
+$(package)_version=3.5.9
+$(package)_download_path=https://github.com/openssl/openssl/releases/download/openssl-$($(package)_version)
 $(package)_file_name=$(package)-$($(package)_version).tar.gz
-$(package)_sha256_hash=88525753f79d3bec27d2fa7c66aa0b92b3aa9498dafd93d7cfa4b3780cdae313
+$(package)_sha256_hash=603f5602e2eef00d77fbd429d34dcd5822bb301757a1bc9cdb24c670f1eb859a
 
 define $(package)_set_vars
 $(package)_config_env=AR="$($(package)_ar)" ARFLAGS=$($(package)_arflags) RANLIB="$($(package)_ranlib)" CC="$($(package)_cc)"
 $(package)_config_env_android=ANDROID_NDK_ROOT="$(host_prefix)/native" PATH="$(host_prefix)/native/bin" CC=clang AR=ar RANLIB=ranlib
 $(package)_build_env_android=ANDROID_NDK_ROOT="$(host_prefix)/native"
+# util/mkbuildinf.pl compiles a "built on:" date into libcrypto. Depends runs
+# under `env -i`, so without this the date is the wall-clock time of the build,
+# and any library that links it in is no longer reproducible.
+$(package)_build_env=SOURCE_DATE_EPOCH=0
 # OPENSSLDIR is compiled into the library as the default certificate location
 # and the home of openssl.cnf. Under the build prefix it would name a directory
 # on the build host (a path in /tmp for CI builds) that any local user can
@@ -22,6 +26,10 @@ $(package)_config_opts+=no-dtls1
 $(package)_config_opts+=no-ec_nistp_64_gcc_128
 $(package)_config_opts+=no-gost
 $(package)_config_opts+=no-md2
+# QUIC (on by default since 3.2) is unused by wallet2. Leaving it out keeps the
+# TLS code the wallets ship close to 3.0's, and removes its qlog code, the only
+# caller of OpenSSL_version(), which is what links the build date in.
+$(package)_config_opts+=no-quic
 $(package)_config_opts+=no-rc5
 $(package)_config_opts+=no-rdrand
 $(package)_config_opts+=no-rfc3779
