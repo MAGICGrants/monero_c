@@ -139,11 +139,11 @@ index 5bdd5d9b4..7ab79e01b 100644
  add_subdirectory(randomx EXCLUDE_FROM_ALL)
 diff --git a/external/polyseed b/external/polyseed
 new file mode 160000
-index 000000000..bd79f5014
+index 000000000..91b0a954c
 --- /dev/null
 +++ b/external/polyseed
 @@ -0,0 +1 @@
-+Subproject commit bd79f5014c331273357277ed8a3d756fb61b9fa1
++Subproject commit 91b0a954c98f0dbc9cadfcdcb2088ccf83b8ecb8
 diff --git a/external/utf8proc b/external/utf8proc
 new file mode 160000
 index 000000000..3de4596fb
@@ -281,7 +281,7 @@ index 82891b9de..26200bf34 100644
  // (1+32) + (1+1+16*32) + (1+16*32) = 1060
 diff --git a/src/polyseed/CMakeLists.txt b/src/polyseed/CMakeLists.txt
 new file mode 100644
-index 000000000..98754792e
+index 000000000..9e823b79d
 --- /dev/null
 +++ b/src/polyseed/CMakeLists.txt
 @@ -0,0 +1,30 @@
@@ -309,7 +309,7 @@ index 000000000..98754792e
 +
 +target_link_libraries(polyseed_wrapper
 +PUBLIC
-+        polyseed
++        polyseed_static
 +        utf8proc
 +        ${SODIUM_LIBRARY}
 +        PRIVATE
